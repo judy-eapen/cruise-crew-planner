@@ -24,7 +24,7 @@ export default function AdminPage() {
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newHotel, setNewHotel] = useState({ name: "", price: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
-  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "0" });
+  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "50" });
 
   const call = useCallback(
     async (body: AdminAction, code?: string) => {
@@ -298,7 +298,7 @@ export default function AdminPage() {
                   },
                   `Added ${newQuote.airline} quote ✓`
                 );
-                setNewQuote({ ...newQuote, airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "0" });
+                setNewQuote({ ...newQuote, airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "50" });
               }}
               className={btnCls}
             >

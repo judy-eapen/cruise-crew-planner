@@ -164,7 +164,7 @@ export async function POST(req: Request) {
           ret_depart: String(retDepart ?? "").slice(0, 40) || "TBD",
           ret_arrive: String(retArrive ?? "").slice(0, 40) || "TBD",
           fare_per_person: Number(farePerPerson),
-          bag_fee: Number(bagFee ?? 0),
+          bag_fee: Number(bagFee ?? 50),
           estimate: false,
           price_checked: today(),
         });
@@ -178,7 +178,7 @@ export async function POST(req: Request) {
           .from("flights")
           .update({
             fare_per_person: Number(farePerPerson),
-            bag_fee: Number(bagFee ?? 0),
+            bag_fee: Number(bagFee ?? 50),
             out_depart: String(outDepart ?? "TBD").slice(0, 40),
             out_arrive: String(outArrive ?? "TBD").slice(0, 40),
             ret_depart: String(retDepart ?? "TBD").slice(0, 40),
