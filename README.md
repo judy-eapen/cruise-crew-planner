@@ -11,7 +11,8 @@ Everything around the cruise is undecided — six possible flight windows (fly o
 - **Compare** — six option cards grouped by departure date, with the selected family's all-in total (flights + hotel + activity tickets), cheapest/most-fun badges, and a stacked cost-breakdown chart
 - **Itinerary** — per-option day-strip timeline (travel / cruise / activity days), sample activities with age-banded pricing, and a "copy summary for the group chat" button
 - **Group** — all 7 families × 6 options cost matrix with group grand totals
-- **Vote** *(coming in v1)* — per-family tokenized vote links, one editable vote per family, live results
+- **Vote** — per-family tokenized vote links (`/vote/<token>` — the link is the identity, no logins), one editable vote per family, live public results with turnout and per-family cards
+- **Admin** (`/admin`, passcode-gated) — edit flight fares (auto-stamps the price-checked date), add/edit/remove hotels, update ticket prices, set real family compositions, copy each family's vote link, and seed the database
 - **Selectors** — origin airport, hotel tier, and family (presets or custom party) re-price everything live
 
 ## Pricing rules
@@ -23,7 +24,11 @@ Everything around the cruise is undecided — six possible flight windows (fly o
 
 ## Stack
 
-Next.js (App Router, TypeScript, Tailwind) + Recharts. v0 runs on seed data in `src/data/trip.ts`; v1 moves data to Supabase and adds voting + an admin mode for price updates.
+Next.js (App Router, TypeScript, Tailwind) + Recharts + Supabase.
+
+**Data:** the app serves bundled seed data (`src/data/trip.ts`) until Supabase is connected, then reads everything from the database — so it works with zero configuration and upgrades in place. Setup guide: `SETUP-SUPABASE.md`.
+
+**Security model:** row-level security denies the anonymous role entirely; every read/write goes through the app's server routes using the service-role key. Admin writes require a passcode (`ADMIN_PASSCODE` env var) checked server-side; votes require a family's secret token. Threat model is a friendly group — the transparency of public results is the real guardrail.
 
 ## Run locally
 

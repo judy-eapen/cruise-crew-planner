@@ -1,14 +1,4 @@
-import {
-  ACTIVITIES,
-  DATE_OPTIONS,
-  FLIGHTS,
-  HOTELS,
-  ITINERARY_SLOTS,
-  type DateOption,
-  type Family,
-  type OptionId,
-  type Origin,
-} from "@/data/trip";
+import type { DateOption, Family, OptionId, Origin, TripData } from "@/lib/types";
 
 export interface PartySize {
   adults: number;
@@ -36,11 +26,17 @@ export function totalPeople(p: PartySize): number {
   return p.adults + p.kids39 + p.kids10plus;
 }
 
-export function costForOption(optionId: OptionId, origin: Origin, hotelId: string, party: PartySize): OptionCost {
-  const option = DATE_OPTIONS.find((o) => o.id === optionId)!;
-  const flight = FLIGHTS.find((f) => f.optionId === optionId && f.origin === origin)!;
-  const hotel = HOTELS.find((h) => h.id === hotelId)!;
-  const slots = ITINERARY_SLOTS.filter((s) => s.optionId === optionId);
+export function costForOption(
+  data: TripData,
+  optionId: OptionId,
+  origin: Origin,
+  hotelId: string,
+  party: PartySize
+): OptionCost {
+  const option = data.dateOptions.find((o) => o.id === optionId)!;
+  const flight = data.flights.find((f) => f.optionId === optionId && f.origin === origin)!;
+  const hotel = data.hotels.find((h) => h.id === hotelId) ?? data.hotels[0];
+  const slots = data.slots.filter((s) => s.optionId === optionId);
 
   // BR-1: kids 2+ pay adult airfare — everyone pays farePerPerson
   const flights = flight.farePerPerson * totalPeople(party);
@@ -56,7 +52,7 @@ export function costForOption(optionId: OptionId, origin: Origin, hotelId: strin
     if (slot.slotType === "full") activityDays += 1;
     else if (slot.slotType === "half") activityDays += 0.5;
     if (!slot.activityId) continue;
-    const act = ACTIVITIES.find((a) => a.id === slot.activityId);
+    const act = data.activities.find((a) => a.id === slot.activityId);
     if (!act) continue;
     tickets += act.adultPrice * (party.adults + party.kids10plus) + act.childPrice * party.kids39;
     if (act.estimate && act.adultPrice + act.childPrice > 0) anyEstimate = true;
@@ -69,14 +65,19 @@ export function costForOption(optionId: OptionId, origin: Origin, hotelId: strin
     hotel: hotelCost,
     tickets,
     total,
-    perPerson: Math.round(total / totalPeople(party)),
+    perPerson: Math.round(total / Math.max(1, totalPeople(party))),
     activityDays,
     anyEstimate,
   };
 }
 
-export function costsForAllOptions(origin: Origin, hotelId: string, party: PartySize): OptionCost[] {
-  return DATE_OPTIONS.map((o) => costForOption(o.id, origin, hotelId, party));
+export function costsForAllOptions(
+  data: TripData,
+  origin: Origin,
+  hotelId: string,
+  party: PartySize
+): OptionCost[] {
+  return data.dateOptions.map((o) => costForOption(data, o.id, origin, hotelId, party));
 }
 
 export const fmt = (n: number) => "$" + n.toLocaleString("en-US");

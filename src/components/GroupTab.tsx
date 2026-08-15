@@ -1,15 +1,15 @@
 "use client";
 
-import { DATE_OPTIONS, FAMILIES, type Origin } from "@/data/trip";
+import type { Origin, TripData } from "@/lib/types";
 import { costForOption, fmt, partyFromFamily } from "@/lib/pricing";
 
-export default function GroupTab({ origin, hotelId }: { origin: Origin; hotelId: string }) {
-  const rows = FAMILIES.map((f) => {
-    const costs = DATE_OPTIONS.map((o) => costForOption(o.id, origin, hotelId, partyFromFamily(f)));
+export default function GroupTab({ data, origin, hotelId }: { data: TripData; origin: Origin; hotelId: string }) {
+  const rows = data.families.map((f) => {
+    const costs = data.dateOptions.map((o) => costForOption(data, o.id, origin, hotelId, partyFromFamily(f)));
     const min = Math.min(...costs.map((c) => c.total));
     return { family: f, costs, min };
   });
-  const groupTotals = DATE_OPTIONS.map((_, i) => rows.reduce((sum, r) => sum + r.costs[i].total, 0));
+  const groupTotals = data.dateOptions.map((_, i) => rows.reduce((sum, r) => sum + r.costs[i].total, 0));
   const minGroup = Math.min(...groupTotals);
 
   return (
@@ -24,7 +24,7 @@ export default function GroupTab({ origin, hotelId }: { origin: Origin; hotelId:
           <thead>
             <tr className="border-b border-white/15 text-left">
               <th className="py-2.5 pr-2 font-semibold text-slate-300">Family</th>
-              {DATE_OPTIONS.map((o) => (
+              {data.dateOptions.map((o) => (
                 <th key={o.id} className="px-2 py-2.5 text-right font-bold text-amber-200">
                   {o.id}
                 </th>
@@ -55,10 +55,10 @@ export default function GroupTab({ origin, hotelId }: { origin: Origin; hotelId:
               </tr>
             ))}
             <tr className="border-t-2 border-white/20">
-              <td className="py-3 pr-2 font-bold text-white">All 7 families</td>
+              <td className="py-3 pr-2 font-bold text-white">All {rows.length} families</td>
               {groupTotals.map((t, i) => (
                 <td
-                  key={DATE_OPTIONS[i].id}
+                  key={data.dateOptions[i].id}
                   className={`px-2 py-3 text-right font-black tabular-nums ${
                     t === minGroup ? "rounded-lg bg-amber-300/20 text-amber-200" : "text-white"
                   }`}

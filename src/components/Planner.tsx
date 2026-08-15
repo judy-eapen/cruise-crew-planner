@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { FAMILIES, HOTELS, PRICE_CHECKED, type Origin } from "@/data/trip";
+import { useEffect, useMemo, useState } from "react";
+import { SEED } from "@/data/trip";
+import type { Origin, TripData } from "@/lib/types";
 import { costsForAllOptions, partyFromFamily, type PartySize } from "@/lib/pricing";
 import CompareTab from "./CompareTab";
 import ItineraryTab from "./ItineraryTab";
@@ -12,18 +13,33 @@ const TABS = ["Compare", "Itinerary", "Group", "Vote"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function Planner() {
+  // Render instantly on bundled seed data; swap in DB data when it arrives.
+  const [data, setData] = useState<TripData>(SEED);
   const [tab, setTab] = useState<Tab>("Compare");
   const [origin, setOrigin] = useState<Origin>("BWI");
-  const [hotelId, setHotelId] = useState(HOTELS[0].id);
-  const [familyId, setFamilyId] = useState(FAMILIES[0].id);
+  const [hotelId, setHotelId] = useState(SEED.hotels[0].id);
+  const [familyId, setFamilyId] = useState(SEED.families[0].id);
   const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1 });
 
-  const party: PartySize =
-    familyId === "custom" ? custom : partyFromFamily(FAMILIES.find((f) => f.id === familyId)!);
+  useEffect(() => {
+    fetch("/api/data")
+      .then((r) => r.json())
+      .then((d: TripData) => {
+        if (d?.source === "db") {
+          setData(d);
+          setHotelId((h) => (d.hotels.some((x) => x.id === h) ? h : d.hotels[0]?.id));
+          setFamilyId((f) => (f === "custom" || d.families.some((x) => x.id === f) ? f : d.families[0]?.id));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
-  const costs = useMemo(() => costsForAllOptions(origin, hotelId, party), [origin, hotelId, party]);
-  const familyLabel =
-    familyId === "custom" ? "Custom family" : FAMILIES.find((f) => f.id === familyId)!.name;
+  const selectedFamily = data.families.find((f) => f.id === familyId);
+  const party: PartySize = familyId === "custom" || !selectedFamily ? custom : partyFromFamily(selectedFamily);
+
+  const costs = useMemo(() => costsForAllOptions(data, origin, hotelId, party), [data, origin, hotelId, party]);
+  const familyLabel = familyId === "custom" || !selectedFamily ? "Custom family" : selectedFamily.name;
+  const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] text-slate-100">
@@ -187,7 +203,7 @@ export default function Planner() {
             className="max-w-[44vw] rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-slate-100 [&>option]:text-slate-900"
             aria-label="Hotel"
           >
-            {HOTELS.map((h) => (
+            {data.hotels.map((h) => (
               <option key={h.id} value={h.id}>
                 🏨 {h.name} (~${h.nightlyRate}/nt)
               </option>
@@ -199,7 +215,7 @@ export default function Planner() {
             className="rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-slate-100 [&>option]:text-slate-900"
             aria-label="Family"
           >
-            {FAMILIES.map((f) => (
+            {data.families.map((f) => (
               <option key={f.id} value={f.id}>
                 👨‍👩‍👧‍👦 {f.name} ({f.adults}A + {f.kids39 + f.kids10plus}K)
               </option>
@@ -237,12 +253,12 @@ export default function Planner() {
       <main className="relative w-full px-5 pt-6 pb-16 lg:px-12">
         {tab === "Compare" && <CompareTab costs={costs} familyLabel={familyLabel} />}
         {tab === "Itinerary" && (
-          <ItineraryTab origin={origin} hotelId={hotelId} party={party} familyLabel={familyLabel} />
+          <ItineraryTab data={data} origin={origin} hotelId={hotelId} party={party} familyLabel={familyLabel} />
         )}
-        {tab === "Group" && <GroupTab origin={origin} hotelId={hotelId} />}
-        {tab === "Vote" && <VoteTab />}
+        {tab === "Group" && <GroupTab data={data} origin={origin} hotelId={hotelId} />}
+        {tab === "Vote" && <VoteTab data={data} />}
         <p className="mt-12 border-t border-white/10 pt-4 text-xs text-slate-400">
-          Prices checked {PRICE_CHECKED} · ~ marks estimated prices pending confirmation · park child pricing =
+          Prices checked {priceChecked} · ~ marks estimated prices pending confirmation · park child pricing =
           ages 3–9; kids 10+ pay adult prices; all kids pay adult airfare
         </p>
       </main>

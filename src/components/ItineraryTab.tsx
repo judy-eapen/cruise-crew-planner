@@ -1,25 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ACTIVITIES,
-  DATE_OPTIONS,
-  HOTELS,
-  ITINERARY_SLOTS,
-  type OptionId,
-  type Origin,
-} from "@/data/trip";
+import type { OptionId, Origin, TripData } from "@/lib/types";
 import { costForOption, fmt, type PartySize } from "@/lib/pricing";
 import { isoRange, shortDate, shortDay } from "@/lib/dates";
 
 const CRUISE_DAYS = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"];
 
 export default function ItineraryTab({
+  data,
   origin,
   hotelId,
   party,
   familyLabel,
 }: {
+  data: TripData;
   origin: Origin;
   hotelId: string;
   party: PartySize;
@@ -28,9 +23,9 @@ export default function ItineraryTab({
   const [optionId, setOptionId] = useState<OptionId>("A");
   const [copied, setCopied] = useState(false);
 
-  const option = DATE_OPTIONS.find((o) => o.id === optionId)!;
-  const slots = ITINERARY_SLOTS.filter((s) => s.optionId === optionId);
-  const cost = costForOption(optionId, origin, hotelId, party);
+  const option = data.dateOptions.find((o) => o.id === optionId)!;
+  const slots = data.slots.filter((s) => s.optionId === optionId);
+  const cost = costForOption(data, optionId, origin, hotelId, party);
   const days = isoRange(option.departDate, option.returnDate);
 
   const dayInfo = (iso: string) => {
@@ -53,11 +48,11 @@ export default function ItineraryTab({
   const copySummary = async () => {
     const lines = [
       `✨ Option ${option.id} — ${option.label}`,
-      `Fly ${shortDate(option.departDate)} → ${shortDate(option.returnDate)} from ${origin} · ${option.hotelNights} hotel nights (${HOTELS.find((h) => h.id === hotelId)!.name})`,
+      `Fly ${shortDate(option.departDate)} → ${shortDate(option.returnDate)} from ${origin} · ${option.hotelNights} hotel nights (${(data.hotels.find((h) => h.id === hotelId) ?? data.hotels[0]).name})`,
       ...slots
         .filter((s) => s.activityId)
         .map((s) => {
-          const a = ACTIVITIES.find((x) => x.id === s.activityId)!;
+          const a = data.activities.find((x) => x.id === s.activityId)!;
           return `• ${shortDate(s.date)} (${s.dayLabel}): ${a.name}`;
         }),
       `• Nov 2–6: 🚢 the cruise!`,
@@ -71,7 +66,7 @@ export default function ItineraryTab({
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        {DATE_OPTIONS.map((o) => (
+        {data.dateOptions.map((o) => (
           <button
             key={o.id}
             onClick={() => setOptionId(o.id)}
@@ -112,7 +107,7 @@ export default function ItineraryTab({
         {slots
           .filter((s) => s.activityId)
           .map((s) => {
-            const a = ACTIVITIES.find((x) => x.id === s.activityId)!;
+            const a = data.activities.find((x) => x.id === s.activityId)!;
             const free = a.adultPrice + a.childPrice === 0;
             return (
               <div
