@@ -14,6 +14,8 @@ export default function ItineraryTab({
   hotelId,
   party,
   familyLabel,
+  optionId,
+  onSelectOption,
 }: {
   data: TripData;
   origin: Origin;
@@ -21,8 +23,9 @@ export default function ItineraryTab({
   hotelId: string;
   party: PartySize;
   familyLabel: string;
+  optionId: OptionId;
+  onSelectOption: (id: OptionId) => void;
 }) {
-  const [optionId, setOptionId] = useState<OptionId>("A");
   const [copied, setCopied] = useState(false);
 
   const option = data.dateOptions.find((o) => o.id === optionId)!;
@@ -71,7 +74,7 @@ export default function ItineraryTab({
         {data.dateOptions.map((o) => (
           <button
             key={o.id}
-            onClick={() => setOptionId(o.id)}
+            onClick={() => onSelectOption(o.id)}
             className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
               o.id === optionId
                 ? "bg-amber-300 text-indigo-950 shadow-lg shadow-amber-900/30"

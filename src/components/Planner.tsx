@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SEED } from "@/data/trip";
-import type { Origin, TripData } from "@/lib/types";
+import type { OptionId, Origin, TripData } from "@/lib/types";
 import { CHEAPEST, costsForAllOptions, partyFromFamily, type PartySize } from "@/lib/pricing";
 import CompareTab from "./CompareTab";
 import ItineraryTab from "./ItineraryTab";
@@ -26,6 +26,13 @@ export default function Planner() {
   const [familyId, setFamilyId] = useState(SEED.families[0].id);
   const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1 });
   const [showGuide, setShowGuide] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<OptionId>("A");
+
+  // Clicking an option card jumps to its day-by-day plan.
+  const goToItinerary = (id: OptionId) => {
+    setSelectedOption(id);
+    document.getElementById("itinerary")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     fetch("/api/data")
@@ -312,7 +319,7 @@ export default function Planner() {
       <main className="relative w-full space-y-16 px-5 pt-10 pb-16 lg:px-12">
         <section id="compare" className="scroll-mt-40">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">01 · The options</p>
-          <CompareTab costs={costs} familyLabel={familyLabel} />
+          <CompareTab costs={costs} familyLabel={familyLabel} onSelectOption={goToItinerary} />
         </section>
 
         <section id="itinerary" className="scroll-mt-40">
@@ -320,7 +327,16 @@ export default function Planner() {
           <h2 className="font-display mb-4 text-2xl tracking-wide text-white">
             What each option actually looks like
           </h2>
-          <ItineraryTab data={data} origin={origin} airlinePref={airlinePref} hotelId={hotelId} party={party} familyLabel={familyLabel} />
+          <ItineraryTab
+            data={data}
+            origin={origin}
+            airlinePref={airlinePref}
+            hotelId={hotelId}
+            party={party}
+            familyLabel={familyLabel}
+            optionId={selectedOption}
+            onSelectOption={setSelectedOption}
+          />
         </section>
 
         <section id="group" className="scroll-mt-40">

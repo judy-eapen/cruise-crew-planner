@@ -4,8 +4,17 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } fro
 import type { OptionCost } from "@/lib/pricing";
 import { fmt } from "@/lib/pricing";
 import { shortDate } from "@/lib/dates";
+import type { OptionId } from "@/lib/types";
 
-export default function CompareTab({ costs, familyLabel }: { costs: OptionCost[]; familyLabel: string }) {
+export default function CompareTab({
+  costs,
+  familyLabel,
+  onSelectOption,
+}: {
+  costs: OptionCost[];
+  familyLabel: string;
+  onSelectOption: (id: OptionId) => void;
+}) {
   const cheapest = Math.min(...costs.map((c) => c.total));
   const mostFun = Math.max(...costs.map((c) => c.activityDays));
 
@@ -31,9 +40,10 @@ export default function CompareTab({ costs, familyLabel }: { costs: OptionCost[]
           <h3 className="mb-2.5 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">{label}</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {group.map((c) => (
-              <div
+              <button
                 key={c.option.id}
-                className={`group rounded-3xl border p-5 backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-fuchsia-900/30 ${
+                onClick={() => onSelectOption(c.option.id)}
+                className={`group cursor-pointer rounded-3xl border p-5 text-left backdrop-blur-md transition hover:-translate-y-0.5 hover:border-amber-300/60 hover:shadow-xl hover:shadow-fuchsia-900/30 ${
                   c.total === cheapest
                     ? "border-amber-300/60 bg-amber-300/10"
                     : "border-white/10 bg-white/5"
@@ -65,7 +75,10 @@ export default function CompareTab({ costs, familyLabel }: { costs: OptionCost[]
                   {fmt(c.total)}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-400">{fmt(c.perPerson)} per person</p>
-              </div>
+                <p className="mt-3 text-xs font-semibold text-amber-300/0 transition group-hover:text-amber-300">
+                  See the day-by-day plan ↓
+                </p>
+              </button>
             ))}
           </div>
         </section>
