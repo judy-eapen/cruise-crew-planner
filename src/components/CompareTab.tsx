@@ -56,6 +56,7 @@ export default function CompareTab({ costs, familyLabel }: { costs: OptionCost[]
                   {shortDate(c.option.departDate)} → {shortDate(c.option.returnDate)}
                 </p>
                 <p className="text-xs text-slate-400">
+                  {c.airline !== "TBD" && <>✈️ {c.airline} · </>}
                   {c.option.hotelNights} hotel night{c.option.hotelNights !== 1 ? "s" : ""} · {c.activityDays}{" "}
                   activity day{c.activityDays !== 1 ? "s" : ""}
                 </p>

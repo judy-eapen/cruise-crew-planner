@@ -46,6 +46,7 @@ const FLIGHTS: Flight[] = (Object.keys(FARES) as OptionId[]).flatMap((optionId) 
   (["IAD", "DCA", "BWI"] as Origin[]).map((origin) => ({
     optionId,
     origin,
+    airline: "TBD",
     farePerPerson: FARES[optionId][origin],
     estimate: true,
     priceChecked: PRICE_CHECKED,

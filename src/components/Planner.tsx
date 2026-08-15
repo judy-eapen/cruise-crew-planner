@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { SEED } from "@/data/trip";
 import type { Origin, TripData } from "@/lib/types";
-import { costsForAllOptions, partyFromFamily, type PartySize } from "@/lib/pricing";
+import { CHEAPEST, costsForAllOptions, partyFromFamily, type PartySize } from "@/lib/pricing";
 import CompareTab from "./CompareTab";
 import ItineraryTab from "./ItineraryTab";
 import GroupTab from "./GroupTab";
@@ -17,6 +17,7 @@ export default function Planner() {
   const [data, setData] = useState<TripData>(SEED);
   const [tab, setTab] = useState<Tab>("Compare");
   const [origin, setOrigin] = useState<Origin>("BWI");
+  const [airlinePref, setAirlinePref] = useState<string>(CHEAPEST);
   const [hotelId, setHotelId] = useState(SEED.hotels[0].id);
   const [familyId, setFamilyId] = useState(SEED.families[0].id);
   const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1 });
@@ -37,7 +38,15 @@ export default function Planner() {
   const selectedFamily = data.families.find((f) => f.id === familyId);
   const party: PartySize = familyId === "custom" || !selectedFamily ? custom : partyFromFamily(selectedFamily);
 
-  const costs = useMemo(() => costsForAllOptions(data, origin, hotelId, party), [data, origin, hotelId, party]);
+  const airlines = useMemo(
+    () => [...new Set(data.flights.filter((f) => f.origin === origin && f.airline !== "TBD").map((f) => f.airline))].sort(),
+    [data, origin]
+  );
+
+  const costs = useMemo(
+    () => costsForAllOptions(data, origin, hotelId, party, airlinePref),
+    [data, origin, hotelId, party, airlinePref]
+  );
   const familyLabel = familyId === "custom" || !selectedFamily ? "Custom family" : selectedFamily.name;
   const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
 
@@ -197,6 +206,21 @@ export default function Planner() {
               </button>
             ))}
           </div>
+          {airlines.length > 0 && (
+            <select
+              value={airlinePref}
+              onChange={(e) => setAirlinePref(e.target.value)}
+              className="rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-slate-100 [&>option]:text-slate-900"
+              aria-label="Airline"
+            >
+              <option value={CHEAPEST}>💸 Cheapest airline</option>
+              {airlines.map((a) => (
+                <option key={a} value={a}>
+                  ✈️ {a}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={hotelId}
             onChange={(e) => setHotelId(e.target.value)}
@@ -253,9 +277,9 @@ export default function Planner() {
       <main className="relative w-full px-5 pt-6 pb-16 lg:px-12">
         {tab === "Compare" && <CompareTab costs={costs} familyLabel={familyLabel} />}
         {tab === "Itinerary" && (
-          <ItineraryTab data={data} origin={origin} hotelId={hotelId} party={party} familyLabel={familyLabel} />
+          <ItineraryTab data={data} origin={origin} airlinePref={airlinePref} hotelId={hotelId} party={party} familyLabel={familyLabel} />
         )}
-        {tab === "Group" && <GroupTab data={data} origin={origin} hotelId={hotelId} />}
+        {tab === "Group" && <GroupTab data={data} origin={origin} airlinePref={airlinePref} hotelId={hotelId} />}
         {tab === "Vote" && <VoteTab data={data} />}
         <p className="mt-12 border-t border-white/10 pt-4 text-xs text-slate-400">
           Prices checked {priceChecked} · ~ marks estimated prices pending confirmation · park child pricing =

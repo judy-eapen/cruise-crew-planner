@@ -3,9 +3,21 @@
 import type { Origin, TripData } from "@/lib/types";
 import { costForOption, fmt, partyFromFamily } from "@/lib/pricing";
 
-export default function GroupTab({ data, origin, hotelId }: { data: TripData; origin: Origin; hotelId: string }) {
+export default function GroupTab({
+  data,
+  origin,
+  airlinePref,
+  hotelId,
+}: {
+  data: TripData;
+  origin: Origin;
+  airlinePref: string;
+  hotelId: string;
+}) {
   const rows = data.families.map((f) => {
-    const costs = data.dateOptions.map((o) => costForOption(data, o.id, origin, hotelId, partyFromFamily(f)));
+    const costs = data.dateOptions.map((o) =>
+      costForOption(data, o.id, origin, hotelId, partyFromFamily(f), airlinePref)
+    );
     const min = Math.min(...costs.map((c) => c.total));
     return { family: f, costs, min };
   });

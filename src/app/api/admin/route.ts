@@ -54,11 +54,12 @@ export async function POST(req: Request) {
             SEED.flights.map((f) => ({
               option_id: f.optionId,
               origin: f.origin,
+              airline: f.airline,
               fare_per_person: f.farePerPerson,
               estimate: f.estimate,
               price_checked: f.priceChecked,
             })),
-            { onConflict: "option_id,origin" }
+            { onConflict: "option_id,origin,airline" }
           )
         );
         await err(
@@ -133,17 +134,32 @@ export async function POST(req: Request) {
         });
       }
 
-      case "update-flight": {
-        const { optionId, origin, farePerPerson, estimate } = payload;
-        const { error } = await supabase
-          .from("flights")
-          .update({
+      case "upsert-flight": {
+        const { optionId, origin, airline, farePerPerson, estimate } = payload;
+        if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
+        const { error } = await supabase.from("flights").upsert(
+          {
+            option_id: optionId,
+            origin,
+            airline: String(airline).trim().slice(0, 60),
             fare_per_person: Number(farePerPerson),
             estimate: Boolean(estimate),
             price_checked: new Date().toISOString().slice(0, 10),
-          })
+          },
+          { onConflict: "option_id,origin,airline" }
+        );
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true });
+      }
+
+      case "delete-flight": {
+        const { optionId, origin, airline } = payload;
+        const { error } = await supabase
+          .from("flights")
+          .delete()
           .eq("option_id", optionId)
-          .eq("origin", origin);
+          .eq("origin", origin)
+          .eq("airline", airline);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }

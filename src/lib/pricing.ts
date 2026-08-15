@@ -16,6 +16,20 @@ export interface OptionCost {
   perPerson: number;
   activityDays: number; // full = 1, half = 0.5
   anyEstimate: boolean;
+  airline: string; // which airline's fare was used
+}
+
+export const CHEAPEST = "Cheapest";
+
+/** Pick the fare for an option+origin honoring the airline preference, falling back to cheapest. */
+export function pickFlight(data: TripData, optionId: OptionId, origin: Origin, airlinePref: string) {
+  const candidates = data.flights.filter((f) => f.optionId === optionId && f.origin === origin);
+  if (!candidates.length) return undefined;
+  if (airlinePref !== CHEAPEST) {
+    const match = candidates.find((f) => f.airline === airlinePref);
+    if (match) return match;
+  }
+  return candidates.reduce((a, b) => (b.farePerPerson < a.farePerPerson ? b : a));
 }
 
 export function partyFromFamily(f: Family): PartySize {
@@ -31,10 +45,11 @@ export function costForOption(
   optionId: OptionId,
   origin: Origin,
   hotelId: string,
-  party: PartySize
+  party: PartySize,
+  airlinePref: string = CHEAPEST
 ): OptionCost {
   const option = data.dateOptions.find((o) => o.id === optionId)!;
-  const flight = data.flights.find((f) => f.optionId === optionId && f.origin === origin)!;
+  const flight = pickFlight(data, optionId, origin, airlinePref)!;
   const hotel = data.hotels.find((h) => h.id === hotelId) ?? data.hotels[0];
   const slots = data.slots.filter((s) => s.optionId === optionId);
 
@@ -68,6 +83,7 @@ export function costForOption(
     perPerson: Math.round(total / Math.max(1, totalPeople(party))),
     activityDays,
     anyEstimate,
+    airline: flight.airline,
   };
 }
 
@@ -75,9 +91,10 @@ export function costsForAllOptions(
   data: TripData,
   origin: Origin,
   hotelId: string,
-  party: PartySize
+  party: PartySize,
+  airlinePref: string = CHEAPEST
 ): OptionCost[] {
-  return data.dateOptions.map((o) => costForOption(data, o.id, origin, hotelId, party));
+  return data.dateOptions.map((o) => costForOption(data, o.id, origin, hotelId, party, airlinePref));
 }
 
 export const fmt = (n: number) => "$" + n.toLocaleString("en-US");

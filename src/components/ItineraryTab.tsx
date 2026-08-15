@@ -10,12 +10,14 @@ const CRUISE_DAYS = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"];
 export default function ItineraryTab({
   data,
   origin,
+  airlinePref,
   hotelId,
   party,
   familyLabel,
 }: {
   data: TripData;
   origin: Origin;
+  airlinePref: string;
   hotelId: string;
   party: PartySize;
   familyLabel: string;
@@ -25,7 +27,7 @@ export default function ItineraryTab({
 
   const option = data.dateOptions.find((o) => o.id === optionId)!;
   const slots = data.slots.filter((s) => s.optionId === optionId);
-  const cost = costForOption(data, optionId, origin, hotelId, party);
+  const cost = costForOption(data, optionId, origin, hotelId, party, airlinePref);
   const days = isoRange(option.departDate, option.returnDate);
 
   const dayInfo = (iso: string) => {
@@ -48,7 +50,7 @@ export default function ItineraryTab({
   const copySummary = async () => {
     const lines = [
       `✨ Option ${option.id} — ${option.label}`,
-      `Fly ${shortDate(option.departDate)} → ${shortDate(option.returnDate)} from ${origin} · ${option.hotelNights} hotel nights (${(data.hotels.find((h) => h.id === hotelId) ?? data.hotels[0]).name})`,
+      `Fly ${shortDate(option.departDate)} → ${shortDate(option.returnDate)} from ${origin}${cost.airline !== "TBD" ? ` on ${cost.airline}` : ""} · ${option.hotelNights} hotel nights (${(data.hotels.find((h) => h.id === hotelId) ?? data.hotels[0]).name})`,
       ...slots
         .filter((s) => s.activityId)
         .map((s) => {

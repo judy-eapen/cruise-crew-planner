@@ -14,6 +14,7 @@ export interface DateOption {
 export interface Flight {
   optionId: OptionId;
   origin: Origin;
+  airline: string; // e.g. "Frontier", "United" — multiple fares per option+origin
   farePerPerson: number; // round trip; kids 2+ pay the same fare as adults
   estimate: boolean;
   priceChecked: string;

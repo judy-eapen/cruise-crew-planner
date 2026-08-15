@@ -15,10 +15,11 @@ create table if not exists date_options (
 create table if not exists flights (
   option_id text not null references date_options(id),
   origin text not null,
+  airline text not null default 'TBD',
   fare_per_person numeric not null,
   estimate boolean not null default true,
   price_checked text,
-  primary key (option_id, origin)
+  primary key (option_id, origin, airline)
 );
 
 create table if not exists hotels (

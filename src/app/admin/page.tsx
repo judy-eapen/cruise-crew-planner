@@ -13,7 +13,7 @@ interface VoteLink {
 
 type AdminAction =
   | { action: "ping" | "seed" | "links" }
-  | { action: "update-flight" | "upsert-hotel" | "delete-hotel" | "update-activity" | "update-family"; payload: Record<string, unknown> };
+  | { action: "upsert-flight" | "delete-flight" | "upsert-hotel" | "delete-hotel" | "update-activity" | "update-family"; payload: Record<string, unknown> };
 
 export default function AdminPage() {
   const [passcode, setPasscode] = useState("");
@@ -23,6 +23,7 @@ export default function AdminPage() {
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newHotel, setNewHotel] = useState({ name: "", nightlyRate: "" });
+  const [newFlight, setNewFlight] = useState({ optionId: "A", origin: "BWI", airline: "", fare: "" });
 
   const call = useCallback(
     async (body: AdminAction, code?: string) => {
@@ -186,15 +187,19 @@ export default function AdminPage() {
         <section className={cardCls}>
           <h2 className="font-bold text-white">Flight fares (per person, round trip)</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Saving a fare stamps today as the price-checked date and clears the estimate flag.
+            Multiple airlines per option+airport are supported — add a row per airline (e.g. Frontier $180 AND
+            United $462 for the same dates). The app defaults to the cheapest; families can pick an airline in
+            the selector. Saving stamps today as the price-checked date and clears the ~ estimate flag. Delete
+            the &ldquo;TBD&rdquo; placeholder rows once real fares are in.
           </p>
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[480px] text-sm">
+            <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="border-b border-white/15 text-left text-slate-300">
                   <th className="py-2">Option</th>
                   <th>Dates</th>
                   <th>Origin</th>
+                  <th>Airline</th>
                   <th className="text-right">Fare</th>
                   <th></th>
                 </tr>
@@ -202,7 +207,7 @@ export default function AdminPage() {
               <tbody>
                 {data?.flights.map((f) => {
                   const opt = data.dateOptions.find((o) => o.id === f.optionId);
-                  const key = draftKey("fl", f.optionId, f.origin);
+                  const key = draftKey("fl", f.optionId, f.origin, f.airline);
                   return (
                     <tr key={key} className="border-b border-white/5">
                       <td className="py-1.5 font-bold text-amber-200">{f.optionId}</td>
@@ -210,6 +215,7 @@ export default function AdminPage() {
                         {opt?.departDate.slice(5)} → {opt?.returnDate.slice(5)}
                       </td>
                       <td className="text-slate-200">{f.origin}</td>
+                      <td className="text-slate-200">{f.airline}</td>
                       <td className="text-right">
                         {f.estimate && <span className="mr-1 text-slate-500">~</span>}
                         <input
@@ -218,25 +224,37 @@ export default function AdminPage() {
                           onChange={(e) => setDraft(key, e.target.value)}
                         />
                       </td>
-                      <td className="pl-2 text-right">
+                      <td className="pl-2 text-right whitespace-nowrap">
                         <button
                           onClick={() =>
                             run(
                               {
-                                action: "update-flight",
+                                action: "upsert-flight",
                                 payload: {
                                   optionId: f.optionId,
                                   origin: f.origin,
+                                  airline: f.airline,
                                   farePerPerson: Number(draft(key, f.farePerPerson)),
                                   estimate: false,
                                 },
                               },
-                              `Saved ${f.origin} fare for ${f.optionId} ✓`
+                              `Saved ${f.airline} ${f.origin} fare for ${f.optionId} ✓`
                             )
                           }
                           className={btnCls}
                         >
                           Save
+                        </button>{" "}
+                        <button
+                          onClick={() =>
+                            run(
+                              { action: "delete-flight", payload: { optionId: f.optionId, origin: f.origin, airline: f.airline } },
+                              "Fare removed"
+                            )
+                          }
+                          className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-pink-300 hover:bg-white/20"
+                        >
+                          ✕
                         </button>
                       </td>
                     </tr>
@@ -244,6 +262,63 @@ export default function AdminPage() {
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3 text-sm">
+            <select
+              value={newFlight.optionId}
+              onChange={(e) => setNewFlight({ ...newFlight, optionId: e.target.value })}
+              className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white [&>option]:text-slate-900"
+            >
+              {data?.dateOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.id} · {o.departDate.slice(5)}→{o.returnDate.slice(5)}
+                </option>
+              ))}
+            </select>
+            <select
+              value={newFlight.origin}
+              onChange={(e) => setNewFlight({ ...newFlight, origin: e.target.value })}
+              className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white [&>option]:text-slate-900"
+            >
+              {["IAD", "DCA", "BWI"].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+            <input
+              placeholder="Airline (e.g. Frontier)"
+              className="w-44 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white"
+              value={newFlight.airline}
+              onChange={(e) => setNewFlight({ ...newFlight, airline: e.target.value })}
+            />
+            <span className="text-slate-400">$</span>
+            <input
+              placeholder="fare"
+              className={inputCls}
+              value={newFlight.fare}
+              onChange={(e) => setNewFlight({ ...newFlight, fare: e.target.value })}
+            />
+            <button
+              onClick={() => {
+                if (!newFlight.airline.trim() || !newFlight.fare) return;
+                run(
+                  {
+                    action: "upsert-flight",
+                    payload: {
+                      optionId: newFlight.optionId,
+                      origin: newFlight.origin,
+                      airline: newFlight.airline.trim(),
+                      farePerPerson: Number(newFlight.fare),
+                      estimate: false,
+                    },
+                  },
+                  `Added ${newFlight.airline} fare ✓`
+                );
+                setNewFlight({ ...newFlight, airline: "", fare: "" });
+              }}
+              className={btnCls}
+            >
+              + Add fare
+            </button>
           </div>
         </section>
 

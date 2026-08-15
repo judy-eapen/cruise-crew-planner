@@ -37,6 +37,7 @@ const mapOption = (r: any): DateOption => ({
 const mapFlight = (r: any): Flight => ({
   optionId: r.option_id as OptionId,
   origin: r.origin as Origin,
+  airline: r.airline ?? "TBD",
   farePerPerson: Number(r.fare_per_person),
   estimate: r.estimate,
   priceChecked: r.price_checked,
