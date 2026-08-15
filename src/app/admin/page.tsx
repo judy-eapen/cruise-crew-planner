@@ -24,7 +24,7 @@ export default function AdminPage() {
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newHotel, setNewHotel] = useState({ name: "", price: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
-  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", departTime: "", returnTime: "", fare: "", bagFee: "0" });
+  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "0" });
 
   const call = useCallback(
     async (body: AdminAction, code?: string) => {
@@ -212,8 +212,14 @@ export default function AdminPage() {
                           {f.airline}
                           {f.estimate && <span className="text-slate-500"> ~</span>}
                         </span>
-                        <input className={`${txtCls} w-36`} placeholder="out (Sat 7:05a NS)" value={draft(k("dt"), f.departTime)} onChange={(e) => setDraft(k("dt"), e.target.value)} />
-                        <input className={`${txtCls} w-36`} placeholder="back (Sun 8:40p)" value={draft(k("rt"), f.returnTime)} onChange={(e) => setDraft(k("rt"), e.target.value)} />
+                        <span className="text-xs text-slate-500">out</span>
+                        <input className={`${txtCls} w-24`} placeholder="7:05 AM" value={draft(k("od"), f.outDepart)} onChange={(e) => setDraft(k("od"), e.target.value)} />
+                        <span className="text-xs text-slate-500">→</span>
+                        <input className={`${txtCls} w-24`} placeholder="9:45 AM" value={draft(k("oa"), f.outArrive)} onChange={(e) => setDraft(k("oa"), e.target.value)} />
+                        <span className="text-xs text-slate-500">back</span>
+                        <input className={`${txtCls} w-24`} placeholder="6:10 PM" value={draft(k("rd"), f.retDepart)} onChange={(e) => setDraft(k("rd"), e.target.value)} />
+                        <span className="text-xs text-slate-500">→</span>
+                        <input className={`${txtCls} w-24`} placeholder="8:40 PM" value={draft(k("ra"), f.retArrive)} onChange={(e) => setDraft(k("ra"), e.target.value)} />
                         <span className="text-xs text-slate-500">fare $</span>
                         <input className={numCls} value={draft(k("fare"), f.farePerPerson)} onChange={(e) => setDraft(k("fare"), e.target.value)} />
                         <span className="text-xs text-slate-500">bag $</span>
@@ -227,8 +233,10 @@ export default function AdminPage() {
                                   id: f.id,
                                   farePerPerson: Number(draft(k("fare"), f.farePerPerson)),
                                   bagFee: Number(draft(k("bag"), f.bagFee)),
-                                  departTime: draft(k("dt"), f.departTime),
-                                  returnTime: draft(k("rt"), f.returnTime),
+                                  outDepart: draft(k("od"), f.outDepart),
+                                  outArrive: draft(k("oa"), f.outArrive),
+                                  retDepart: draft(k("rd"), f.retDepart),
+                                  retArrive: draft(k("ra"), f.retArrive),
                                 },
                               },
                               `Saved ${f.airline} quote ✓`
@@ -262,8 +270,10 @@ export default function AdminPage() {
               ))}
             </select>
             <input placeholder="Airline" className={`${txtCls} w-28`} value={newQuote.airline} onChange={(e) => setNewQuote({ ...newQuote, airline: e.target.value })} />
-            <input placeholder="out time" className={`${txtCls} w-28`} value={newQuote.departTime} onChange={(e) => setNewQuote({ ...newQuote, departTime: e.target.value })} />
-            <input placeholder="back time" className={`${txtCls} w-28`} value={newQuote.returnTime} onChange={(e) => setNewQuote({ ...newQuote, returnTime: e.target.value })} />
+            <input placeholder="out dep 7:05 AM" className={`${txtCls} w-28`} value={newQuote.outDepart} onChange={(e) => setNewQuote({ ...newQuote, outDepart: e.target.value })} />
+            <input placeholder="out arr 9:45 AM" className={`${txtCls} w-28`} value={newQuote.outArrive} onChange={(e) => setNewQuote({ ...newQuote, outArrive: e.target.value })} />
+            <input placeholder="back dep 6:10 PM" className={`${txtCls} w-28`} value={newQuote.retDepart} onChange={(e) => setNewQuote({ ...newQuote, retDepart: e.target.value })} />
+            <input placeholder="back arr 8:40 PM" className={`${txtCls} w-28`} value={newQuote.retArrive} onChange={(e) => setNewQuote({ ...newQuote, retArrive: e.target.value })} />
             <span className="text-xs text-slate-500">fare $</span>
             <input className={numCls} value={newQuote.fare} onChange={(e) => setNewQuote({ ...newQuote, fare: e.target.value })} />
             <span className="text-xs text-slate-500">bag $</span>
@@ -278,15 +288,17 @@ export default function AdminPage() {
                       optionId: newQuote.optionId,
                       origin: newQuote.origin,
                       airline: newQuote.airline.trim(),
-                      departTime: newQuote.departTime,
-                      returnTime: newQuote.returnTime,
+                      outDepart: newQuote.outDepart,
+                      outArrive: newQuote.outArrive,
+                      retDepart: newQuote.retDepart,
+                      retArrive: newQuote.retArrive,
                       farePerPerson: Number(newQuote.fare),
                       bagFee: Number(newQuote.bagFee || 0),
                     },
                   },
                   `Added ${newQuote.airline} quote ✓`
                 );
-                setNewQuote({ ...newQuote, airline: "", departTime: "", returnTime: "", fare: "", bagFee: "0" });
+                setNewQuote({ ...newQuote, airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "0" });
               }}
               className={btnCls}
             >

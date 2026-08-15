@@ -59,8 +59,10 @@ export async function POST(req: Request) {
                 option_id: f.optionId,
                 origin: f.origin,
                 airline: f.airline,
-                depart_time: f.departTime,
-                return_time: f.returnTime,
+                out_depart: f.outDepart,
+                out_arrive: f.outArrive,
+                ret_depart: f.retDepart,
+                ret_arrive: f.retArrive,
                 fare_per_person: f.farePerPerson,
                 bag_fee: f.bagFee,
                 estimate: f.estimate,
@@ -151,14 +153,16 @@ export async function POST(req: Request) {
       }
 
       case "add-quote": {
-        const { optionId, origin, airline, departTime, returnTime, farePerPerson, bagFee } = payload;
+        const { optionId, origin, airline, outDepart, outArrive, retDepart, retArrive, farePerPerson, bagFee } = payload;
         if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
         const { error } = await supabase.from("flights").insert({
           option_id: optionId,
           origin,
           airline: String(airline).trim().slice(0, 60),
-          depart_time: String(departTime ?? "").slice(0, 80) || "TBD",
-          return_time: String(returnTime ?? "").slice(0, 80) || "TBD",
+          out_depart: String(outDepart ?? "").slice(0, 40) || "TBD",
+          out_arrive: String(outArrive ?? "").slice(0, 40) || "TBD",
+          ret_depart: String(retDepart ?? "").slice(0, 40) || "TBD",
+          ret_arrive: String(retArrive ?? "").slice(0, 40) || "TBD",
           fare_per_person: Number(farePerPerson),
           bag_fee: Number(bagFee ?? 0),
           estimate: false,
@@ -169,14 +173,16 @@ export async function POST(req: Request) {
       }
 
       case "update-quote": {
-        const { id, farePerPerson, bagFee, departTime, returnTime } = payload;
+        const { id, farePerPerson, bagFee, outDepart, outArrive, retDepart, retArrive } = payload;
         const { error } = await supabase
           .from("flights")
           .update({
             fare_per_person: Number(farePerPerson),
             bag_fee: Number(bagFee ?? 0),
-            depart_time: String(departTime ?? "TBD").slice(0, 80),
-            return_time: String(returnTime ?? "TBD").slice(0, 80),
+            out_depart: String(outDepart ?? "TBD").slice(0, 40),
+            out_arrive: String(outArrive ?? "TBD").slice(0, 40),
+            ret_depart: String(retDepart ?? "TBD").slice(0, 40),
+            ret_arrive: String(retArrive ?? "TBD").slice(0, 40),
             estimate: false,
             price_checked: today(),
           })

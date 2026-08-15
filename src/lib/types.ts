@@ -17,8 +17,10 @@ export interface FlightQuote {
   optionId: OptionId;
   origin: Origin;
   airline: string;
-  departTime: string; // e.g. "Sat 7:05am nonstop"
-  returnTime: string; // e.g. "Sun 8:40pm 1 stop"
+  outDepart: string; // e.g. "7:05 AM"
+  outArrive: string; // e.g. "9:45 AM"
+  retDepart: string; // e.g. "6:10 PM"
+  retArrive: string; // e.g. "8:40 PM"
   farePerPerson: number; // round trip; kids 2+ pay the same fare as adults
   bagFee: number; // round trip, per checked bag ($0 = bags included)
   estimate: boolean;

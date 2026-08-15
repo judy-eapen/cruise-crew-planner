@@ -145,7 +145,7 @@ export default function BuilderSection({
     const lines = [
       `✨ Option ${option.id} — ${option.label}`,
       cost.quote
-        ? `Flights: ${cost.quote.origin} → MCO on ${cost.quote.airline} (${cost.quote.departTime} / back ${cost.quote.returnTime}) · ${fmt(cost.quote.farePerPerson)}/person${cost.quote.bagFee ? ` + ${fmt(cost.quote.bagFee)}/bag` : ""}`
+        ? `Flights: ${cost.quote.origin} → MCO on ${cost.quote.airline} (out ${cost.quote.outDepart}→${cost.quote.outArrive} / back ${cost.quote.retDepart}→${cost.quote.retArrive}) · ${fmt(cost.quote.farePerPerson)}/person${cost.quote.bagFee ? ` + ${fmt(cost.quote.bagFee)}/bag` : ""}`
         : "Flights: TBD",
       preH && segDates.pre ? `Hotel before cruise (${segDates.pre}): ${preH.name}` : "",
       postH && segDates.post ? `Hotel after cruise (${segDates.post}): ${postH.name}` : "",
@@ -226,7 +226,7 @@ export default function BuilderSection({
                   ✈️ {q.origin} → MCO · {q.airline}
                 </span>
                 <span className="text-xs text-slate-400">
-                  out {q.departTime} · back {q.returnTime}
+                  out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive}
                 </span>
                 <span className="text-sm text-slate-300">
                   {q.estimate && "~"}
