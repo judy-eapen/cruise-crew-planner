@@ -1,7 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import type { OptionCost } from "@/lib/pricing";
+import type { BuildCost } from "@/lib/pricing";
 import { fmt } from "@/lib/pricing";
 import { shortDate } from "@/lib/dates";
 import type { OptionId } from "@/lib/types";
@@ -11,14 +11,14 @@ export default function CompareTab({
   familyLabel,
   onSelectOption,
 }: {
-  costs: OptionCost[];
+  costs: BuildCost[];
   familyLabel: string;
   onSelectOption: (id: OptionId) => void;
 }) {
   const cheapest = Math.min(...costs.map((c) => c.total));
   const mostFun = Math.max(...costs.map((c) => c.activityDays));
 
-  const byDeparture: [string, OptionCost[]][] = [
+  const byDeparture: [string, BuildCost[]][] = [
     ["Fly out Sat, Oct 31", costs.filter((c) => c.option.departDate === "2026-10-31")],
     ["Fly out Sun, Nov 1", costs.filter((c) => c.option.departDate === "2026-11-01")],
   ];
@@ -66,9 +66,10 @@ export default function CompareTab({
                   {shortDate(c.option.departDate)} → {shortDate(c.option.returnDate)}
                 </p>
                 <p className="text-xs text-slate-400">
-                  {c.airline !== "TBD" && <>✈️ {c.airline} · </>}
-                  {c.option.hotelNights} hotel night{c.option.hotelNights !== 1 ? "s" : ""} · {c.activityDays}{" "}
-                  activity day{c.activityDays !== 1 ? "s" : ""}
+                  {c.quote && c.quote.airline !== "TBD" && <>✈️ {c.quote.airline} · </>}
+                  🏨 {c.option.preNights} night{c.option.preNights !== 1 ? "s" : ""} before
+                  {c.option.postNights > 0 ? ` + ${c.option.postNights} after` : ""} · {c.activityDays} free day
+                  {c.activityDays !== 1 ? "s" : ""}
                 </p>
                 <p className="mt-4 text-4xl font-black tracking-tight text-white">
                   {c.anyEstimate && <span className="text-slate-500">~</span>}
@@ -76,7 +77,7 @@ export default function CompareTab({
                 </p>
                 <p className="mt-0.5 text-xs text-slate-400">{fmt(c.perPerson)} per person</p>
                 <p className="mt-3 text-xs font-semibold text-amber-300/0 transition group-hover:text-amber-300">
-                  See the day-by-day plan ↓
+                  Build this trip your way ↓
                 </p>
               </button>
             ))}

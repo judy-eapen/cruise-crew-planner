@@ -6,6 +6,7 @@ import { SEED } from "@/data/trip";
 export const dynamic = "force-dynamic";
 
 const newToken = () => randomBytes(5).toString("hex"); // 10-char vote-link token
+const today = () => new Date().toISOString().slice(0, 10);
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function POST(req: Request) {
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true });
 
       // Load (or reload) the bundled seed data. Upserts, so re-running is safe;
-      // existing family tokens and votes are preserved.
+      // existing family tokens, family edits, and votes are preserved.
       case "seed": {
         const err = async (p: PromiseLike<{ error: any }>) => {
           const { error } = await p;
@@ -49,26 +50,38 @@ export async function POST(req: Request) {
             }))
           )
         );
-        await err(
-          supabase.from("flights").upsert(
-            SEED.flights.map((f) => ({
-              option_id: f.optionId,
-              origin: f.origin,
-              airline: f.airline,
-              fare_per_person: f.farePerPerson,
-              estimate: f.estimate,
-              price_checked: f.priceChecked,
-            })),
-            { onConflict: "option_id,origin,airline" }
-          )
-        );
+        // Flight quotes: only seed if the table is empty (quotes are identity-keyed).
+        const { count } = await supabase.from("flights").select("*", { count: "exact", head: true });
+        if (!count) {
+          await err(
+            supabase.from("flights").insert(
+              SEED.flights.map((f) => ({
+                option_id: f.optionId,
+                origin: f.origin,
+                airline: f.airline,
+                depart_time: f.departTime,
+                return_time: f.returnTime,
+                fare_per_person: f.farePerPerson,
+                bag_fee: f.bagFee,
+                estimate: f.estimate,
+                price_checked: f.priceChecked,
+              }))
+            )
+          );
+        }
         await err(
           supabase.from("hotels").upsert(
             SEED.hotels.map((h) => ({
               id: h.id,
               name: h.name,
-              nightly_rate: h.nightlyRate,
+              price: h.price,
+              price_mode: h.priceMode,
+              stars: h.stars,
+              area: h.area,
+              type: h.type,
+              pool: h.pool,
               breakfast_included: h.breakfastIncluded,
+              amenities: h.amenities,
               estimate: h.estimate,
             }))
           )
@@ -82,6 +95,8 @@ export async function POST(req: Request) {
               adult_price: a.adultPrice,
               child_price: a.childPrice,
               category: a.category,
+              age_fit: a.ageFit,
+              area: a.area,
               star: a.star,
               estimate: a.estimate,
               note: a.note ?? null,
@@ -113,6 +128,7 @@ export async function POST(req: Request) {
               kids_3_9: f.kids39,
               kids_10plus: f.kids10plus,
               rooms: f.rooms,
+              bags: f.bags,
               placeholder: f.placeholder,
               token: newToken(),
             }))
@@ -134,45 +150,62 @@ export async function POST(req: Request) {
         });
       }
 
-      case "upsert-flight": {
-        const { optionId, origin, airline, farePerPerson, estimate } = payload;
+      case "add-quote": {
+        const { optionId, origin, airline, departTime, returnTime, farePerPerson, bagFee } = payload;
         if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
-        const { error } = await supabase.from("flights").upsert(
-          {
-            option_id: optionId,
-            origin,
-            airline: String(airline).trim().slice(0, 60),
-            fare_per_person: Number(farePerPerson),
-            estimate: Boolean(estimate),
-            price_checked: new Date().toISOString().slice(0, 10),
-          },
-          { onConflict: "option_id,origin,airline" }
-        );
+        const { error } = await supabase.from("flights").insert({
+          option_id: optionId,
+          origin,
+          airline: String(airline).trim().slice(0, 60),
+          depart_time: String(departTime ?? "").slice(0, 80) || "TBD",
+          return_time: String(returnTime ?? "").slice(0, 80) || "TBD",
+          fare_per_person: Number(farePerPerson),
+          bag_fee: Number(bagFee ?? 0),
+          estimate: false,
+          price_checked: today(),
+        });
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
 
-      case "delete-flight": {
-        const { optionId, origin, airline } = payload;
+      case "update-quote": {
+        const { id, farePerPerson, bagFee, departTime, returnTime } = payload;
         const { error } = await supabase
           .from("flights")
-          .delete()
-          .eq("option_id", optionId)
-          .eq("origin", origin)
-          .eq("airline", airline);
+          .update({
+            fare_per_person: Number(farePerPerson),
+            bag_fee: Number(bagFee ?? 0),
+            depart_time: String(departTime ?? "TBD").slice(0, 80),
+            return_time: String(returnTime ?? "TBD").slice(0, 80),
+            estimate: false,
+            price_checked: today(),
+          })
+          .eq("id", id);
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true });
+      }
+
+      case "delete-quote": {
+        const { error } = await supabase.from("flights").delete().eq("id", payload.id);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
 
       case "upsert-hotel": {
-        const { id, name, nightlyRate, breakfastIncluded, estimate } = payload;
+        const { id, name, price, priceMode, stars, area, type, pool, breakfastIncluded, amenities } = payload;
         const hotelId = id || `H${Date.now().toString(36)}`;
         const { error } = await supabase.from("hotels").upsert({
           id: hotelId,
           name: String(name).slice(0, 120),
-          nightly_rate: Number(nightlyRate),
+          price: Number(price),
+          price_mode: priceMode === "per_property_night_split" ? "per_property_night_split" : "per_room_night",
+          stars: Math.min(5, Math.max(1, Number(stars ?? 3))),
+          area: String(area ?? "").slice(0, 80),
+          type: type === "airbnb" ? "airbnb" : "hotel",
+          pool: Boolean(pool),
           breakfast_included: Boolean(breakfastIncluded),
-          estimate: Boolean(estimate),
+          amenities: String(amenities ?? "").slice(0, 200),
+          estimate: false,
         });
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true, id: hotelId });
@@ -185,17 +218,23 @@ export async function POST(req: Request) {
       }
 
       case "update-activity": {
-        const { id, adultPrice, childPrice, estimate } = payload;
+        const { id, adultPrice, childPrice, ageFit, area } = payload;
         const { error } = await supabase
           .from("activities")
-          .update({ adult_price: Number(adultPrice), child_price: Number(childPrice), estimate: Boolean(estimate) })
+          .update({
+            adult_price: Number(adultPrice),
+            child_price: Number(childPrice),
+            age_fit: ["all", "younger", "older", "check"].includes(ageFit) ? ageFit : "all",
+            area: ["orlando", "port", "daytrip"].includes(area) ? area : "orlando",
+            estimate: false,
+          })
           .eq("id", id);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
 
       case "update-family": {
-        const { id, name, adults, kids39, kids10plus, rooms } = payload;
+        const { id, name, adults, kids39, kids10plus, rooms, bags } = payload;
         const { error } = await supabase
           .from("families")
           .update({
@@ -204,6 +243,7 @@ export async function POST(req: Request) {
             kids_3_9: Number(kids39),
             kids_10plus: Number(kids10plus),
             rooms: Number(rooms),
+            bags: Number(bags ?? 2),
             placeholder: false,
           })
           .eq("id", id);

@@ -1,5 +1,4 @@
-// Seed trip data — ported from the planning CSVs (2026-08-14).
-// Prices marked estimate:true are placeholders pending real research.
+// Seed trip data — placeholder prices flagged estimate:true, replaced from /admin.
 // Used directly until Supabase is connected; also the payload for the
 // admin "seed database" action.
 
@@ -7,11 +6,9 @@ import type {
   Activity,
   DateOption,
   Family,
-  Flight,
+  FlightQuote,
   Hotel,
   ItinerarySlot,
-  OptionId,
-  Origin,
   TripData,
 } from "@/lib/types";
 
@@ -31,7 +28,10 @@ const DATE_OPTIONS: DateOption[] = [
   { id: "F", label: "Sun out / fly home off the ship — minimum trip", departDate: "2026-11-01", returnDate: "2026-11-06", preNights: 1, postNights: 0, hotelNights: 1 },
 ];
 
-const FARES: Record<OptionId, Record<Origin, number>> = {
+export const PRICE_CHECKED = "2026-08-14";
+
+// Placeholder quotes (one per airport per option) until real "cheapest 3" research lands.
+const SEED_FARES: Record<string, { IAD: number; DCA: number; BWI: number }> = {
   A: { IAD: 242, DCA: 258, BWI: 218 },
   B: { IAD: 232, DCA: 248, BWI: 208 },
   C: { IAD: 252, DCA: 268, BWI: 228 },
@@ -40,44 +40,49 @@ const FARES: Record<OptionId, Record<Origin, number>> = {
   F: { IAD: 236, DCA: 252, BWI: 208 },
 };
 
-export const PRICE_CHECKED = "2026-08-14";
-
-const FLIGHTS: Flight[] = (Object.keys(FARES) as OptionId[]).flatMap((optionId) =>
-  (["IAD", "DCA", "BWI"] as Origin[]).map((origin) => ({
-    optionId,
+let quoteId = 0;
+const FLIGHTS: FlightQuote[] = DATE_OPTIONS.flatMap((o) =>
+  (["BWI", "IAD", "DCA"] as const).map((origin) => ({
+    id: ++quoteId,
+    optionId: o.id,
     origin,
     airline: "TBD",
-    farePerPerson: FARES[optionId][origin],
+    departTime: "TBD",
+    returnTime: "TBD",
+    farePerPerson: SEED_FARES[o.id][origin],
+    bagFee: 0,
     estimate: true,
     priceChecked: PRICE_CHECKED,
   }))
 );
 
 const HOTELS: Hotel[] = [
-  { id: "H1", name: "Value — Drury Inn Lake Buena Vista", nightlyRate: 145, breakfastIncluded: true, estimate: true },
-  { id: "H2", name: "Mid — Residence Inn Flamingo Crossings (suites)", nightlyRate: 185, breakfastIncluded: true, estimate: true },
-  { id: "H3", name: "Splurge — Disney on-property (Pop Century)", nightlyRate: 260, breakfastIncluded: false, estimate: true },
+  { id: "H1", name: "Drury Inn Lake Buena Vista", price: 145, priceMode: "per_room_night", stars: 3, area: "Lake Buena Vista (near Disney)", type: "hotel", pool: true, breakfastIncluded: true, amenities: "Free hot breakfast + evening snacks", estimate: true },
+  { id: "H2", name: "Residence Inn Flamingo Crossings (suites)", price: 185, priceMode: "per_room_night", stars: 3, area: "Flamingo Crossings (near Disney)", type: "hotel", pool: true, breakfastIncluded: true, amenities: "Suites sleep 5–6, kitchenettes", estimate: true },
+  { id: "H3", name: "Disney Pop Century (on-property)", price: 260, priceMode: "per_room_night", stars: 3, area: "Disney property", type: "hotel", pool: true, breakfastIncluded: false, amenities: "Early park entry", estimate: true },
 ];
 
 const ACTIVITIES: Activity[] = [
-  { id: "MK", name: "Magic Kingdom", type: "full", adultPrice: 175, childPrice: 165, category: "Theme park", star: true, estimate: true, note: "Great fit for the whole group, esp. the younger half" },
-  { id: "AK", name: "Animal Kingdom", type: "full", adultPrice: 145, childPrice: 135, category: "Theme park", star: true, estimate: true, note: "All ages love the safari" },
-  { id: "HS", name: "Hollywood Studios", type: "full", adultPrice: 160, childPrice: 150, category: "Theme park", star: true, estimate: true, note: "Star Wars / Toy Story spans the whole age range" },
-  { id: "SW", name: "SeaWorld Orlando", type: "full", adultPrice: 80, childPrice: 75, category: "Theme park", star: true, estimate: true, note: "Animal exhibits work for all ages incl. the 4yo" },
-  { id: "LEGO", name: "LEGOLAND Florida", type: "full", adultPrice: 105, childPrice: 95, category: "Theme park", star: true, estimate: true, note: "Especially good for the 4–10yos" },
-  { id: "GATOR", name: "Gatorland", type: "full", adultPrice: 35, childPrice: 25, category: "Attraction", star: true, estimate: true, note: "Budget-friendly full day, fits everyone" },
-  { id: "OSC", name: "Orlando Science Center", type: "half", adultPrice: 26, childPrice: 21, category: "Attraction", star: true, estimate: true, note: "Hands-on for literally every kid age in the group" },
-  { id: "FUNSPOT", name: "Fun Spot America", type: "half", adultPrice: 60, childPrice: 50, category: "Attraction", star: true, estimate: true, note: "Kiddie rides AND bigger coasters" },
-  { id: "ICON", name: "ICON Park + The Wheel", type: "half", adultPrice: 35, childPrice: 28, category: "Attraction", star: true, estimate: true, note: "Arcade + wheel + mini golf" },
-  { id: "CRAYOLA", name: "Crayola Experience", type: "half", adultPrice: 30, childPrice: 30, category: "Attraction", star: true, estimate: true, note: "Especially good for the 4–8yos" },
-  { id: "WW", name: "WonderWorks", type: "half", adultPrice: 40, childPrice: 30, category: "Attraction", star: true, estimate: true, note: "Whole age range" },
-  { id: "AIRBOAT", name: "Airboat tour", type: "half", adultPrice: 60, childPrice: 45, category: "Attraction", star: true, estimate: true, note: "All ages" },
-  { id: "DS", name: "Disney Springs", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", star: true, estimate: false, note: "Easy to split into smaller groups by age" },
-  { id: "CW", name: "CityWalk at Universal", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", star: true, estimate: false },
-  { id: "WPBOAT", name: "Winter Park Scenic Boat Tour", type: "half", adultPrice: 18, childPrice: 9, category: "Free / low cost", star: true, estimate: true, note: "Relaxing for the whole mixed group" },
-  { id: "POOL", name: "Hotel pool time", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", star: true, estimate: false, note: "Universal win with 14 kids" },
-  { id: "COCOA", name: "Cocoa Beach", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", star: true, estimate: false },
-  { id: "BEACH", name: "Beach day (Cocoa Beach / New Smyrna)", type: "full", adultPrice: 0, childPrice: 0, category: "Free / low cost", star: true, estimate: false },
+  { id: "MK", name: "Magic Kingdom", type: "full", adultPrice: 175, childPrice: 165, category: "Theme park", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Great fit for the whole group, esp. the younger half" },
+  { id: "AK", name: "Animal Kingdom", type: "full", adultPrice: 145, childPrice: 135, category: "Theme park", ageFit: "all", area: "orlando", star: true, estimate: true, note: "All ages love the safari" },
+  { id: "HS", name: "Hollywood Studios", type: "full", adultPrice: 160, childPrice: 150, category: "Theme park", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Star Wars / Toy Story spans the whole age range" },
+  { id: "SW", name: "SeaWorld Orlando", type: "full", adultPrice: 80, childPrice: 75, category: "Theme park", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Animal exhibits work for all ages incl. the 4yo" },
+  { id: "LEGO", name: "LEGOLAND Florida", type: "full", adultPrice: 105, childPrice: 95, category: "Theme park", ageFit: "younger", area: "daytrip", star: true, estimate: true, note: "Especially good for the 4–10yos; ~45 min drive" },
+  { id: "GATOR", name: "Gatorland", type: "full", adultPrice: 35, childPrice: 25, category: "Attraction", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Budget-friendly full day, fits everyone" },
+  { id: "KSC", name: "Kennedy Space Center", type: "half", adultPrice: 80, childPrice: 70, category: "Attraction", ageFit: "older", area: "port", star: false, estimate: true, note: "Near Port Canaveral — great on disembark day; best for 8+, hands-on exhibits help the littles" },
+  { id: "OSC", name: "Orlando Science Center", type: "half", adultPrice: 26, childPrice: 21, category: "Attraction", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Hands-on for literally every kid age in the group" },
+  { id: "FUNSPOT", name: "Fun Spot America", type: "half", adultPrice: 60, childPrice: 50, category: "Attraction", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Kiddie rides AND bigger coasters" },
+  { id: "ICON", name: "ICON Park + The Wheel", type: "half", adultPrice: 35, childPrice: 28, category: "Attraction", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Arcade + wheel + mini golf" },
+  { id: "CRAYOLA", name: "Crayola Experience", type: "half", adultPrice: 30, childPrice: 30, category: "Attraction", ageFit: "younger", area: "orlando", star: true, estimate: true, note: "Especially good for the 4–8yos" },
+  { id: "WW", name: "WonderWorks", type: "half", adultPrice: 40, childPrice: 30, category: "Attraction", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Whole age range" },
+  { id: "KART", name: "Andretti Indoor Karting", type: "half", adultPrice: 35, childPrice: 25, category: "Attraction", ageFit: "check", area: "orlando", star: false, estimate: true, note: "Go-kart height requirements may exclude the 4–5yos" },
+  { id: "AIRBOAT", name: "Airboat tour", type: "half", adultPrice: 60, childPrice: 45, category: "Attraction", ageFit: "all", area: "orlando", star: true, estimate: true, note: "All ages" },
+  { id: "DS", name: "Disney Springs", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: false, note: "Easy to split into smaller groups by age" },
+  { id: "CW", name: "CityWalk at Universal", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: false },
+  { id: "WPBOAT", name: "Winter Park Scenic Boat Tour", type: "half", adultPrice: 18, childPrice: 9, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Relaxing for the whole mixed group" },
+  { id: "POOL", name: "Hotel pool time", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: false, note: "Universal win with 14 kids" },
+  { id: "COCOA", name: "Cocoa Beach", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "port", star: true, estimate: false, note: "~1 hr drive; pairs well with disembark day" },
+  { id: "BEACH", name: "Beach day (Cocoa Beach / New Smyrna)", type: "full", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "daytrip", star: true, estimate: false },
 ];
 
 const ITINERARY_SLOTS: ItinerarySlot[] = [
@@ -111,13 +116,13 @@ const ITINERARY_SLOTS: ItinerarySlot[] = [
 ];
 
 const FAMILIES: Family[] = [
-  { id: "F1", name: "Family 1", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, placeholder: true },
-  { id: "F2", name: "Family 2", adults: 2, kids39: 2, kids10plus: 1, rooms: 1, placeholder: true },
-  { id: "F3", name: "Family 3", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, placeholder: true },
-  { id: "F4", name: "Family 4", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, placeholder: true },
-  { id: "F5", name: "Family 5", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, placeholder: true },
-  { id: "F6", name: "Family 6", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, placeholder: true },
-  { id: "F7", name: "Family 7", adults: 2, kids39: 0, kids10plus: 1, rooms: 1, placeholder: true },
+  { id: "F1", name: "Family 1", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
+  { id: "F2", name: "Family 2", adults: 2, kids39: 2, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
+  { id: "F3", name: "Family 3", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
+  { id: "F4", name: "Family 4", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
+  { id: "F5", name: "Family 5", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
+  { id: "F6", name: "Family 6", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
+  { id: "F7", name: "Family 7", adults: 2, kids39: 0, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
 ];
 
 export const SEED: TripData = {

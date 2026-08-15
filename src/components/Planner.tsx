@@ -2,37 +2,32 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SEED } from "@/data/trip";
-import type { OptionId, Origin, TripData } from "@/lib/types";
-import { CHEAPEST, costsForAllOptions, partyFromFamily, type PartySize } from "@/lib/pricing";
+import type { Build, OptionId, TripData } from "@/lib/types";
+import { costForBuild, defaultBuild, partyFromFamily, type PartySize } from "@/lib/pricing";
 import CompareTab from "./CompareTab";
-import ItineraryTab from "./ItineraryTab";
+import BuilderSection from "./BuilderSection";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
 
 const SECTIONS = [
   { id: "compare", label: "Compare" },
-  { id: "itinerary", label: "Itinerary" },
+  { id: "build", label: "Build" },
   { id: "group", label: "Group" },
   { id: "vote", label: "Vote" },
 ] as const;
+
+const BUILDS_KEY = "ccp-builds-v2";
 
 export default function Planner() {
   // Render instantly on bundled seed data; swap in DB data when it arrives.
   const [data, setData] = useState<TripData>(SEED);
   const [active, setActive] = useState<string>("compare");
-  const [origin, setOrigin] = useState<Origin>("BWI");
-  const [airlinePref, setAirlinePref] = useState<string>(CHEAPEST);
-  const [hotelId, setHotelId] = useState(SEED.hotels[0].id);
   const [familyId, setFamilyId] = useState(SEED.families[0].id);
-  const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1 });
+  const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2 });
   const [showGuide, setShowGuide] = useState(false);
   const [selectedOption, setSelectedOption] = useState<OptionId>("A");
-
-  // Clicking an option card jumps to its day-by-day plan.
-  const goToItinerary = (id: OptionId) => {
-    setSelectedOption(id);
-    document.getElementById("itinerary")?.scrollIntoView({ behavior: "smooth" });
-  };
+  // Personal builds live in this browser only; the group table uses the suggested plan.
+  const [builds, setBuilds] = useState<Partial<Record<OptionId, Build>>>({});
 
   useEffect(() => {
     fetch("/api/data")
@@ -40,12 +35,15 @@ export default function Planner() {
       .then((d: TripData) => {
         if (d?.source === "db") {
           setData(d);
-          setHotelId((h) => (d.hotels.some((x) => x.id === h) ? h : d.hotels[0]?.id));
           setFamilyId((f) => (f === "custom" || d.families.some((x) => x.id === f) ? f : d.families[0]?.id));
         }
       })
       .catch(() => {});
     setShowGuide(!window.localStorage.getItem("ccp-guide-dismissed"));
+    try {
+      const saved = window.localStorage.getItem(BUILDS_KEY);
+      if (saved) setBuilds(JSON.parse(saved));
+    } catch {}
   }, []);
 
   // Scroll-spy: highlight the section currently in view.
@@ -68,17 +66,32 @@ export default function Planner() {
     setShowGuide(false);
   };
 
+  const persistBuilds = (next: Partial<Record<OptionId, Build>>) => {
+    setBuilds(next);
+    try {
+      window.localStorage.setItem(BUILDS_KEY, JSON.stringify(next));
+    } catch {}
+  };
+
+  const effectiveBuild = (id: OptionId): Build => builds[id] ?? defaultBuild(data, id);
+  const updateBuild = (id: OptionId, b: Build) => persistBuilds({ ...builds, [id]: b });
+  const resetBuild = (id: OptionId) => {
+    const next = { ...builds };
+    delete next[id];
+    persistBuilds(next);
+  };
+
+  const goToBuilder = (id: OptionId) => {
+    setSelectedOption(id);
+    document.getElementById("build")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const selectedFamily = data.families.find((f) => f.id === familyId);
   const party: PartySize = familyId === "custom" || !selectedFamily ? custom : partyFromFamily(selectedFamily);
 
-  const airlines = useMemo(
-    () => [...new Set(data.flights.filter((f) => f.origin === origin && f.airline !== "TBD").map((f) => f.airline))].sort(),
-    [data, origin]
-  );
-
   const costs = useMemo(
-    () => costsForAllOptions(data, origin, hotelId, party, airlinePref),
-    [data, origin, hotelId, party, airlinePref]
+    () => data.dateOptions.map((o) => costForBuild(data, o.id, builds[o.id] ?? defaultBuild(data, o.id), party)),
+    [data, builds, party]
   );
   const familyLabel = familyId === "custom" || !selectedFamily ? "Custom family" : selectedFamily.name;
   const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
@@ -110,7 +123,7 @@ export default function Planner() {
       {/* Starfield */}
       <div className="pointer-events-none absolute inset-0 h-[900px] opacity-40 [background-image:radial-gradient(1.5px_1.5px_at_12%_18%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_28%_8%,#fde68a_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_46%_26%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_64%_12%,#fff_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_81%_22%,#fde68a_50%,transparent_51%),radial-gradient(1px_1px_at_92%_9%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_73%_38%,#fff_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_8%_44%,#fde68a_50%,transparent_51%)]" />
 
-      {/* Top nav — anchor links, not tabs */}
+      {/* Top nav — table of contents */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0e2a]/75 backdrop-blur-md">
         <div className="flex w-full items-center justify-between gap-4 px-5 py-3 lg:px-12">
           <a href="#top" className="flex items-center gap-2 text-xl tracking-wide">
@@ -193,8 +206,8 @@ export default function Planner() {
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
             The cruise is booked — Mon <span className="font-semibold text-white">Nov 2</span> (board PM) to Fri{" "}
-            <span className="font-semibold text-white">Nov 6</span> (off 9am). Six ways to wrap the magic
-            around it — scroll to compare them, see the day-by-day plans, and vote.
+            <span className="font-semibold text-white">Nov 6</span> (off 9am). Six ways to wrap the magic around
+            it. Compare them, build your version, and vote.
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-[0.35em] text-amber-300/80">
             14 adults · 14 kids · one castle to storm
@@ -211,7 +224,7 @@ export default function Planner() {
               <span className="font-bold text-amber-300">①</span> Pick <em>your</em> family below
             </span>
             <span>
-              <span className="font-bold text-amber-300">②</span> Scroll to compare the 6 options
+              <span className="font-bold text-amber-300">②</span> Compare the 6 options — tap one to build it your way
             </span>
             <span>
               <span className="font-bold text-amber-300">③</span> Vote using your family&apos;s private link
@@ -226,9 +239,10 @@ export default function Planner() {
         </div>
       )}
 
-      {/* Selector bar — sticky so your choices follow you down the page */}
+      {/* Selector bar — who are you? */}
       <div className="sticky top-[52px] z-20 w-full px-5 sm:top-[56px] lg:px-12">
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#171247]/80 p-2.5 backdrop-blur-md">
+          <span className="pl-1 text-xs font-bold uppercase tracking-wide text-slate-400">You are:</span>
           <select
             value={familyId}
             onChange={(e) => setFamilyId(e.target.value)}
@@ -237,50 +251,10 @@ export default function Planner() {
           >
             {data.families.map((f) => (
               <option key={f.id} value={f.id}>
-                👨‍👩‍👧‍👦 {f.name} ({f.adults}A + {f.kids39 + f.kids10plus}K)
+                👨‍👩‍👧‍👦 {f.name} ({f.adults}A + {f.kids39 + f.kids10plus}K · {f.bags} bags)
               </option>
             ))}
             <option value="custom">✏️ Custom…</option>
-          </select>
-          <div className="flex overflow-hidden rounded-full border border-white/15 bg-white/5">
-            {(["IAD", "DCA", "BWI"] as Origin[]).map((o) => (
-              <button
-                key={o}
-                onClick={() => setOrigin(o)}
-                className={`px-3.5 py-1.5 text-sm font-bold transition ${
-                  origin === o ? "bg-amber-300 text-indigo-950" : "text-slate-200 hover:bg-white/10"
-                }`}
-              >
-                {o}
-              </button>
-            ))}
-          </div>
-          {airlines.length > 0 && (
-            <select
-              value={airlinePref}
-              onChange={(e) => setAirlinePref(e.target.value)}
-              className="rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-slate-100 [&>option]:text-slate-900"
-              aria-label="Airline"
-            >
-              <option value={CHEAPEST}>💸 Cheapest airline</option>
-              {airlines.map((a) => (
-                <option key={a} value={a}>
-                  ✈️ {a}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            value={hotelId}
-            onChange={(e) => setHotelId(e.target.value)}
-            className="max-w-[44vw] rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-slate-100 [&>option]:text-slate-900"
-            aria-label="Hotel"
-          >
-            {data.hotels.map((h) => (
-              <option key={h.id} value={h.id}>
-                🏨 {h.name} (~${h.nightlyRate}/nt)
-              </option>
-            ))}
           </select>
           {familyId === "custom" && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5">
@@ -290,6 +264,7 @@ export default function Planner() {
                   ["Kids 3–9", "kids39"],
                   ["Kids 10+", "kids10plus"],
                   ["Rooms", "rooms"],
+                  ["Bags", "bags"],
                 ] as const
               ).map(([label, key]) => (
                 <label key={key} className="flex items-center gap-1 text-xs font-medium text-slate-200">
@@ -306,11 +281,15 @@ export default function Planner() {
               ))}
             </div>
           )}
+          {hasEstimates && (
+            <span className="ml-auto hidden items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300 md:inline-flex">
+              <span className="font-bold text-amber-300">~</span> Prices are estimates · checked {priceChecked}
+            </span>
+          )}
         </div>
         {hasEstimates && (
-          <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">
-            <span className="font-bold text-amber-300">~</span> Prices are estimates, checked {priceChecked} —
-            final fares confirmed before booking
+          <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300 md:hidden">
+            <span className="font-bold text-amber-300">~</span> Prices are estimates · checked {priceChecked}
           </p>
         )}
       </div>
@@ -319,29 +298,34 @@ export default function Planner() {
       <main className="relative w-full space-y-16 px-5 pt-10 pb-16 lg:px-12">
         <section id="compare" className="scroll-mt-40">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">01 · The options</p>
-          <CompareTab costs={costs} familyLabel={familyLabel} onSelectOption={goToItinerary} />
+          <CompareTab costs={costs} familyLabel={familyLabel} onSelectOption={goToBuilder} />
         </section>
 
-        <section id="itinerary" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">02 · Day by day</p>
-          <h2 className="font-display mb-4 text-2xl tracking-wide text-white">
-            What each option actually looks like
+        <section id="build" className="scroll-mt-40">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">02 · Build your trip</p>
+          <h2 className="font-display mb-1 text-2xl tracking-wide text-white">
+            Make Option {selectedOption} yours
           </h2>
-          <ItineraryTab
+          <p className="mb-4 text-sm text-slate-400">
+            Pick the flight, the hotels, and what to do each free day — your total updates live. Your build is
+            saved on this device; the suggested plan is always one tap away.
+          </p>
+          <BuilderSection
             data={data}
-            origin={origin}
-            airlinePref={airlinePref}
-            hotelId={hotelId}
             party={party}
             familyLabel={familyLabel}
             optionId={selectedOption}
             onSelectOption={setSelectedOption}
+            build={effectiveBuild(selectedOption)}
+            onUpdateBuild={(b) => updateBuild(selectedOption, b)}
+            onReset={() => resetBuild(selectedOption)}
+            isCustomized={Boolean(builds[selectedOption])}
           />
         </section>
 
         <section id="group" className="scroll-mt-40">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">03 · The whole crew</p>
-          <GroupTab data={data} origin={origin} airlinePref={airlinePref} hotelId={hotelId} />
+          <GroupTab data={data} />
         </section>
 
         <section id="vote" className="scroll-mt-40">
@@ -351,7 +335,8 @@ export default function Planner() {
 
         <p className="border-t border-white/10 pt-4 text-xs text-slate-400">
           Prices checked {priceChecked} · ~ marks estimated prices pending confirmation · park child pricing =
-          ages 3–9; kids 10+ pay adult prices; all kids pay adult airfare
+          ages 3–9; kids 10+ pay adult prices; all kids pay adult airfare · group table shows the suggested plan
+          for consistency
         </p>
       </main>
     </div>

@@ -1,6 +1,7 @@
--- Cruise Crew Planner — Supabase schema
+-- Cruise Crew Planner — Supabase schema (v2)
 -- Paste this whole file into the Supabase SQL Editor and click Run.
 -- Then use the app's /admin page ("Seed database") to load the data.
+-- Already ran an older schema? Run supabase/migration-v2.sql instead.
 
 create table if not exists date_options (
   id text primary key,
@@ -12,21 +13,31 @@ create table if not exists date_options (
   hotel_nights int not null
 );
 
+-- Real flight quotes: ~3 per option, cheapest surfaced first.
 create table if not exists flights (
+  id bigint generated always as identity primary key,
   option_id text not null references date_options(id),
   origin text not null,
   airline text not null default 'TBD',
+  depart_time text default 'TBD',
+  return_time text default 'TBD',
   fare_per_person numeric not null,
+  bag_fee numeric not null default 0,
   estimate boolean not null default true,
-  price_checked text,
-  primary key (option_id, origin, airline)
+  price_checked text
 );
 
 create table if not exists hotels (
   id text primary key,
   name text not null,
-  nightly_rate numeric not null,
+  price numeric not null,
+  price_mode text not null default 'per_room_night' check (price_mode in ('per_room_night', 'per_property_night_split')),
+  stars int not null default 3,
+  area text not null default '',
+  type text not null default 'hotel' check (type in ('hotel', 'airbnb')),
+  pool boolean not null default false,
   breakfast_included boolean not null default false,
+  amenities text not null default '',
   estimate boolean not null default true
 );
 
@@ -37,6 +48,8 @@ create table if not exists activities (
   adult_price numeric not null,
   child_price numeric not null,
   category text not null,
+  age_fit text not null default 'all' check (age_fit in ('all', 'younger', 'older', 'check')),
+  area text not null default 'orlando' check (area in ('orlando', 'port', 'daytrip')),
   star boolean not null default false,
   estimate boolean not null default true,
   note text
@@ -58,6 +71,7 @@ create table if not exists families (
   kids_3_9 int not null,
   kids_10plus int not null,
   rooms int not null default 1,
+  bags int not null default 2,
   placeholder boolean not null default false,
   token text unique not null
 );

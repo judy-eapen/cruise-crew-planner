@@ -1,23 +1,13 @@
 "use client";
 
-import type { Origin, TripData } from "@/lib/types";
-import { costForOption, fmt, partyFromFamily } from "@/lib/pricing";
+import type { TripData } from "@/lib/types";
+import { costForBuild, defaultBuild, fmt, partyFromFamily } from "@/lib/pricing";
 
-export default function GroupTab({
-  data,
-  origin,
-  airlinePref,
-  hotelId,
-}: {
-  data: TripData;
-  origin: Origin;
-  airlinePref: string;
-  hotelId: string;
-}) {
+export default function GroupTab({ data }: { data: TripData }) {
+  // Always priced on the organizer's suggested plan so every cell is apples-to-apples.
+  const defaults = Object.fromEntries(data.dateOptions.map((o) => [o.id, defaultBuild(data, o.id)]));
   const rows = data.families.map((f) => {
-    const costs = data.dateOptions.map((o) =>
-      costForOption(data, o.id, origin, hotelId, partyFromFamily(f), airlinePref)
-    );
+    const costs = data.dateOptions.map((o) => costForBuild(data, o.id, defaults[o.id], partyFromFamily(f)));
     const min = Math.min(...costs.map((c) => c.total));
     return { family: f, costs, min };
   });
@@ -28,8 +18,8 @@ export default function GroupTab({
     <div>
       <h2 className="font-display text-2xl tracking-wide text-white">The whole crew, every option</h2>
       <p className="mt-1 text-sm text-slate-400">
-        Flying from {origin} · each family&apos;s cheapest option glows gold. Family rows are placeholders until
-        real compositions land.
+        Priced on the suggested plan (cheapest flight + first hotel + sample activities) so every family&apos;s
+        numbers are comparable. Each family&apos;s cheapest option glows gold.
       </p>
       <div className="mt-5 overflow-x-auto rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
         <table className="w-full min-w-[560px] text-sm">

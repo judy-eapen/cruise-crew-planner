@@ -6,10 +6,12 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { SEED } from "@/data/trip";
 import type {
   Activity,
+  AgeFit,
   DateOption,
   Family,
-  Flight,
+  FlightQuote,
   Hotel,
+  HotelPriceMode,
   ItinerarySlot,
   OptionId,
   Origin,
@@ -34,19 +36,29 @@ const mapOption = (r: any): DateOption => ({
   postNights: r.post_nights,
   hotelNights: r.hotel_nights,
 });
-const mapFlight = (r: any): Flight => ({
+const mapQuote = (r: any): FlightQuote => ({
+  id: r.id,
   optionId: r.option_id as OptionId,
   origin: r.origin as Origin,
   airline: r.airline ?? "TBD",
+  departTime: r.depart_time ?? "TBD",
+  returnTime: r.return_time ?? "TBD",
   farePerPerson: Number(r.fare_per_person),
+  bagFee: Number(r.bag_fee ?? 0),
   estimate: r.estimate,
   priceChecked: r.price_checked,
 });
 const mapHotel = (r: any): Hotel => ({
   id: r.id,
   name: r.name,
-  nightlyRate: Number(r.nightly_rate),
-  breakfastIncluded: r.breakfast_included,
+  price: Number(r.price),
+  priceMode: (r.price_mode ?? "per_room_night") as HotelPriceMode,
+  stars: r.stars ?? 3,
+  area: r.area ?? "",
+  type: r.type === "airbnb" ? "airbnb" : "hotel",
+  pool: r.pool ?? false,
+  breakfastIncluded: r.breakfast_included ?? false,
+  amenities: r.amenities ?? "",
   estimate: r.estimate,
 });
 const mapActivity = (r: any): Activity => ({
@@ -56,6 +68,8 @@ const mapActivity = (r: any): Activity => ({
   adultPrice: Number(r.adult_price),
   childPrice: Number(r.child_price),
   category: r.category,
+  ageFit: (r.age_fit ?? "all") as AgeFit,
+  area: r.area === "port" || r.area === "daytrip" ? r.area : "orlando",
   star: r.star,
   estimate: r.estimate,
   note: r.note ?? undefined,
@@ -74,6 +88,7 @@ const mapFamily = (r: any): Family => ({
   kids39: r.kids_3_9,
   kids10plus: r.kids_10plus,
   rooms: r.rooms,
+  bags: r.bags ?? 2,
   placeholder: r.placeholder,
 });
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -89,7 +104,7 @@ export async function getTripData(): Promise<TripData> {
     supabase.from("hotels").select("*").order("id"),
     supabase.from("activities").select("*"),
     supabase.from("itinerary_slots").select("*").order("date"),
-    supabase.from("families").select("id,name,adults,kids_3_9,kids_10plus,rooms,placeholder").order("id"),
+    supabase.from("families").select("id,name,adults,kids_3_9,kids_10plus,rooms,bags,placeholder").order("id"),
   ]);
 
   // Not seeded yet (or schema missing) → keep serving the bundled seed.
@@ -98,7 +113,7 @@ export async function getTripData(): Promise<TripData> {
   return {
     source: "db",
     dateOptions: opts.data.map(mapOption),
-    flights: (flights.data ?? []).map(mapFlight),
+    flights: (flights.data ?? []).map(mapQuote),
     hotels: (hotels.data ?? []).map(mapHotel),
     activities: (activities.data ?? []).map(mapActivity),
     slots: (slots.data ?? []).map(mapSlot),

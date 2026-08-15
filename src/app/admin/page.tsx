@@ -11,9 +11,10 @@ interface VoteLink {
   voted: boolean;
 }
 
-type AdminAction =
-  | { action: "ping" | "seed" | "links" }
-  | { action: "upsert-flight" | "delete-flight" | "upsert-hotel" | "delete-hotel" | "update-activity" | "update-family"; payload: Record<string, unknown> };
+interface AdminAction {
+  action: string;
+  payload?: Record<string, unknown>;
+}
 
 export default function AdminPage() {
   const [passcode, setPasscode] = useState("");
@@ -22,8 +23,8 @@ export default function AdminPage() {
   const [data, setData] = useState<TripData | null>(null);
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [newHotel, setNewHotel] = useState({ name: "", nightlyRate: "" });
-  const [newFlight, setNewFlight] = useState({ optionId: "A", origin: "BWI", airline: "", fare: "" });
+  const [newHotel, setNewHotel] = useState({ name: "", price: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
+  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", departTime: "", returnTime: "", fare: "", bagFee: "0" });
 
   const call = useCallback(
     async (body: AdminAction, code?: string) => {
@@ -42,6 +43,7 @@ export default function AdminPage() {
   const refresh = useCallback(async () => {
     const d = await fetch("/api/data").then((r) => r.json());
     setData(d);
+    setDrafts({});
     try {
       const l = await call({ action: "links" });
       setLinks(l.links ?? []);
@@ -86,14 +88,15 @@ export default function AdminPage() {
     }
   };
 
-  const draftKey = (...parts: string[]) => parts.join("|");
+  const draftKey = (...parts: (string | number)[]) => parts.join("|");
   const draft = (key: string, fallback: string | number) => drafts[key] ?? String(fallback);
   const setDraft = (key: string, value: string) => setDrafts((d) => ({ ...d, [key]: value }));
 
-  const inputCls =
-    "w-24 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-sm text-white text-right";
-  const btnCls =
-    "rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-indigo-950 hover:bg-amber-200 transition";
+  const numCls = "w-20 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-sm text-white text-right";
+  const txtCls = "rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-sm text-white";
+  const selCls = "rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-sm text-white [&>option]:text-slate-900";
+  const btnCls = "rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-indigo-950 hover:bg-amber-200 transition";
+  const delCls = "rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-pink-300 hover:bg-white/20";
   const cardCls = "mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-md";
 
   if (!unlocked) {
@@ -124,7 +127,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] px-5 py-10 text-slate-100 lg:px-12">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="font-display text-3xl tracking-wide">
             🔧 Trip <span className="text-amber-300">Admin</span>
@@ -148,8 +151,8 @@ export default function AdminPage() {
         <section className={cardCls}>
           <h2 className="font-bold text-white">Database</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Loads the bundled seed data into Supabase (safe to re-run; keeps existing family tokens, edits, and
-            votes).
+            Loads the bundled seed data into Supabase (safe to re-run; keeps family tokens, family edits, votes,
+            and any flight quotes you&apos;ve entered).
           </p>
           <button onClick={() => run({ action: "seed" }, "Seeded ✨")} className={`${btnCls} mt-3`}>
             Seed database
@@ -164,7 +167,7 @@ export default function AdminPage() {
             {links.length === 0 && <p className="text-sm text-slate-500">No families in the database yet.</p>}
             {links.map((l) => (
               <div key={l.id} className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="w-24 font-semibold text-white">{l.name}</span>
+                <span className="w-32 font-semibold text-white">{l.name}</span>
                 <code className="rounded bg-white/10 px-2 py-0.5 text-xs text-amber-100">/vote/{l.token}</code>
                 <button
                   onClick={() => {
@@ -183,162 +186,154 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* Flights */}
+        {/* Flight quotes */}
         <section className={cardCls}>
-          <h2 className="font-bold text-white">Flight fares (per person, round trip)</h2>
+          <h2 className="font-bold text-white">Flight quotes</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Multiple airlines per option+airport are supported — add a row per airline (e.g. Frontier $180 AND
-            United $462 for the same dates). The app defaults to the cheapest; families can pick an airline in
-            the selector. Saving stamps today as the price-checked date and clears the ~ estimate flag. Delete
-            the &ldquo;TBD&rdquo; placeholder rows once real fares are in.
+            ~3 real quotes per option (the app surfaces them cheapest-first). Fare = round trip per person; bag
+            fee = round trip per checked bag ($0 if bags fly free, e.g. Southwest). Saving stamps today&apos;s
+            date and clears the ~ estimate flag. Delete the TBD placeholders as real quotes land.
           </p>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="border-b border-white/15 text-left text-slate-300">
-                  <th className="py-2">Option</th>
-                  <th>Dates</th>
-                  <th>Origin</th>
-                  <th>Airline</th>
-                  <th className="text-right">Fare</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.flights.map((f) => {
-                  const opt = data.dateOptions.find((o) => o.id === f.optionId);
-                  const key = draftKey("fl", f.optionId, f.origin, f.airline);
-                  return (
-                    <tr key={key} className="border-b border-white/5">
-                      <td className="py-1.5 font-bold text-amber-200">{f.optionId}</td>
-                      <td className="text-xs text-slate-400">
-                        {opt?.departDate.slice(5)} → {opt?.returnDate.slice(5)}
-                      </td>
-                      <td className="text-slate-200">{f.origin}</td>
-                      <td className="text-slate-200">{f.airline}</td>
-                      <td className="text-right">
-                        {f.estimate && <span className="mr-1 text-slate-500">~</span>}
-                        <input
-                          className={inputCls}
-                          value={draft(key, f.farePerPerson)}
-                          onChange={(e) => setDraft(key, e.target.value)}
-                        />
-                      </td>
-                      <td className="pl-2 text-right whitespace-nowrap">
+          {data?.dateOptions.map((o) => (
+            <div key={o.id} className="mt-4 border-t border-white/10 pt-3">
+              <p className="text-sm font-bold text-amber-200">
+                Option {o.id} · {o.departDate.slice(5)} → {o.returnDate.slice(5)}
+              </p>
+              <div className="mt-2 space-y-2">
+                {data.flights
+                  .filter((f) => f.optionId === o.id)
+                  .sort((a, b) => a.farePerPerson - b.farePerPerson)
+                  .map((f) => {
+                    const k = (field: string) => draftKey("q", f.id, field);
+                    return (
+                      <div key={f.id} className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="w-12 font-semibold text-slate-200">{f.origin}</span>
+                        <span className="w-24 text-slate-200">
+                          {f.airline}
+                          {f.estimate && <span className="text-slate-500"> ~</span>}
+                        </span>
+                        <input className={`${txtCls} w-36`} placeholder="out (Sat 7:05a NS)" value={draft(k("dt"), f.departTime)} onChange={(e) => setDraft(k("dt"), e.target.value)} />
+                        <input className={`${txtCls} w-36`} placeholder="back (Sun 8:40p)" value={draft(k("rt"), f.returnTime)} onChange={(e) => setDraft(k("rt"), e.target.value)} />
+                        <span className="text-xs text-slate-500">fare $</span>
+                        <input className={numCls} value={draft(k("fare"), f.farePerPerson)} onChange={(e) => setDraft(k("fare"), e.target.value)} />
+                        <span className="text-xs text-slate-500">bag $</span>
+                        <input className={numCls} value={draft(k("bag"), f.bagFee)} onChange={(e) => setDraft(k("bag"), e.target.value)} />
                         <button
                           onClick={() =>
                             run(
                               {
-                                action: "upsert-flight",
+                                action: "update-quote",
                                 payload: {
-                                  optionId: f.optionId,
-                                  origin: f.origin,
-                                  airline: f.airline,
-                                  farePerPerson: Number(draft(key, f.farePerPerson)),
-                                  estimate: false,
+                                  id: f.id,
+                                  farePerPerson: Number(draft(k("fare"), f.farePerPerson)),
+                                  bagFee: Number(draft(k("bag"), f.bagFee)),
+                                  departTime: draft(k("dt"), f.departTime),
+                                  returnTime: draft(k("rt"), f.returnTime),
                                 },
                               },
-                              `Saved ${f.airline} ${f.origin} fare for ${f.optionId} ✓`
+                              `Saved ${f.airline} quote ✓`
                             )
                           }
                           className={btnCls}
                         >
                           Save
-                        </button>{" "}
-                        <button
-                          onClick={() =>
-                            run(
-                              { action: "delete-flight", payload: { optionId: f.optionId, origin: f.origin, airline: f.airline } },
-                              "Fare removed"
-                            )
-                          }
-                          className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-pink-300 hover:bg-white/20"
-                        >
+                        </button>
+                        <button onClick={() => run({ action: "delete-quote", payload: { id: f.id } }, "Quote removed")} className={delCls}>
                           ✕
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
+          {/* Add quote */}
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3 text-sm">
-            <select
-              value={newFlight.optionId}
-              onChange={(e) => setNewFlight({ ...newFlight, optionId: e.target.value })}
-              className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white [&>option]:text-slate-900"
-            >
+            <select value={newQuote.optionId} onChange={(e) => setNewQuote({ ...newQuote, optionId: e.target.value })} className={selCls}>
               {data?.dateOptions.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.id} · {o.departDate.slice(5)}→{o.returnDate.slice(5)}
                 </option>
               ))}
             </select>
-            <select
-              value={newFlight.origin}
-              onChange={(e) => setNewFlight({ ...newFlight, origin: e.target.value })}
-              className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white [&>option]:text-slate-900"
-            >
+            <select value={newQuote.origin} onChange={(e) => setNewQuote({ ...newQuote, origin: e.target.value })} className={selCls}>
               {["IAD", "DCA", "BWI"].map((o) => (
                 <option key={o}>{o}</option>
               ))}
             </select>
-            <input
-              placeholder="Airline (e.g. Frontier)"
-              className="w-44 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white"
-              value={newFlight.airline}
-              onChange={(e) => setNewFlight({ ...newFlight, airline: e.target.value })}
-            />
-            <span className="text-slate-400">$</span>
-            <input
-              placeholder="fare"
-              className={inputCls}
-              value={newFlight.fare}
-              onChange={(e) => setNewFlight({ ...newFlight, fare: e.target.value })}
-            />
+            <input placeholder="Airline" className={`${txtCls} w-28`} value={newQuote.airline} onChange={(e) => setNewQuote({ ...newQuote, airline: e.target.value })} />
+            <input placeholder="out time" className={`${txtCls} w-28`} value={newQuote.departTime} onChange={(e) => setNewQuote({ ...newQuote, departTime: e.target.value })} />
+            <input placeholder="back time" className={`${txtCls} w-28`} value={newQuote.returnTime} onChange={(e) => setNewQuote({ ...newQuote, returnTime: e.target.value })} />
+            <span className="text-xs text-slate-500">fare $</span>
+            <input className={numCls} value={newQuote.fare} onChange={(e) => setNewQuote({ ...newQuote, fare: e.target.value })} />
+            <span className="text-xs text-slate-500">bag $</span>
+            <input className={numCls} value={newQuote.bagFee} onChange={(e) => setNewQuote({ ...newQuote, bagFee: e.target.value })} />
             <button
               onClick={() => {
-                if (!newFlight.airline.trim() || !newFlight.fare) return;
+                if (!newQuote.airline.trim() || !newQuote.fare) return;
                 run(
                   {
-                    action: "upsert-flight",
+                    action: "add-quote",
                     payload: {
-                      optionId: newFlight.optionId,
-                      origin: newFlight.origin,
-                      airline: newFlight.airline.trim(),
-                      farePerPerson: Number(newFlight.fare),
-                      estimate: false,
+                      optionId: newQuote.optionId,
+                      origin: newQuote.origin,
+                      airline: newQuote.airline.trim(),
+                      departTime: newQuote.departTime,
+                      returnTime: newQuote.returnTime,
+                      farePerPerson: Number(newQuote.fare),
+                      bagFee: Number(newQuote.bagFee || 0),
                     },
                   },
-                  `Added ${newFlight.airline} fare ✓`
+                  `Added ${newQuote.airline} quote ✓`
                 );
-                setNewFlight({ ...newFlight, airline: "", fare: "" });
+                setNewQuote({ ...newQuote, airline: "", departTime: "", returnTime: "", fare: "", bagFee: "0" });
               }}
               className={btnCls}
             >
-              + Add fare
+              + Add quote
             </button>
           </div>
         </section>
 
         {/* Hotels */}
         <section className={cardCls}>
-          <h2 className="font-bold text-white">Hotels</h2>
+          <h2 className="font-bold text-white">Hotels & Airbnbs</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Price is per night: per room (hotels) or for the whole property split evenly across the{" "}
+            {data?.families.length ?? 7} families (Airbnb mode).
+          </p>
           <div className="mt-3 space-y-2">
             {data?.hotels.map((h) => {
-              const nameKey = draftKey("hn", h.id);
-              const rateKey = draftKey("hr", h.id);
+              const k = (field: string) => draftKey("h", h.id, field);
               return (
                 <div key={h.id} className="flex flex-wrap items-center gap-2 text-sm">
-                  <input
-                    className="min-w-64 flex-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white"
-                    value={draft(nameKey, h.name)}
-                    onChange={(e) => setDraft(nameKey, e.target.value)}
-                  />
-                  <span className="text-slate-400">$</span>
-                  <input className={inputCls} value={draft(rateKey, h.nightlyRate)} onChange={(e) => setDraft(rateKey, e.target.value)} />
-                  <span className="text-xs text-slate-500">/night</span>
+                  <input className={`${txtCls} min-w-56 flex-1`} value={draft(k("name"), h.name)} onChange={(e) => setDraft(k("name"), e.target.value)} />
+                  <span className="text-xs text-slate-500">$</span>
+                  <input className={numCls} value={draft(k("price"), h.price)} onChange={(e) => setDraft(k("price"), e.target.value)} />
+                  <select className={selCls} value={draft(k("mode"), h.priceMode)} onChange={(e) => setDraft(k("mode"), e.target.value)}>
+                    <option value="per_room_night">/night per room</option>
+                    <option value="per_property_night_split">/night whole place (split)</option>
+                  </select>
+                  <select className={selCls} value={draft(k("stars"), h.stars)} onChange={(e) => setDraft(k("stars"), e.target.value)}>
+                    {[2, 3, 4, 5].map((s) => (
+                      <option key={s} value={s}>
+                        {s}⭐
+                      </option>
+                    ))}
+                  </select>
+                  <input className={`${txtCls} w-40`} placeholder="area" value={draft(k("area"), h.area)} onChange={(e) => setDraft(k("area"), e.target.value)} />
+                  <select className={selCls} value={draft(k("type"), h.type)} onChange={(e) => setDraft(k("type"), e.target.value)}>
+                    <option value="hotel">🏨 hotel</option>
+                    <option value="airbnb">🏡 airbnb</option>
+                  </select>
+                  <label className="flex items-center gap-1 text-xs text-slate-400">
+                    🏊
+                    <input type="checkbox" checked={draft(k("pool"), h.pool ? "1" : "") === "1" || (drafts[k("pool")] === undefined && h.pool)} onChange={(e) => setDraft(k("pool"), e.target.checked ? "1" : "")} />
+                  </label>
+                  <label className="flex items-center gap-1 text-xs text-slate-400">
+                    🍳
+                    <input type="checkbox" checked={draft(k("bkf"), h.breakfastIncluded ? "1" : "") === "1" || (drafts[k("bkf")] === undefined && h.breakfastIncluded)} onChange={(e) => setDraft(k("bkf"), e.target.checked ? "1" : "")} />
+                  </label>
                   <button
                     onClick={() =>
                       run(
@@ -346,10 +341,15 @@ export default function AdminPage() {
                           action: "upsert-hotel",
                           payload: {
                             id: h.id,
-                            name: draft(nameKey, h.name),
-                            nightlyRate: Number(draft(rateKey, h.nightlyRate)),
-                            breakfastIncluded: h.breakfastIncluded,
-                            estimate: false,
+                            name: draft(k("name"), h.name),
+                            price: Number(draft(k("price"), h.price)),
+                            priceMode: draft(k("mode"), h.priceMode),
+                            stars: Number(draft(k("stars"), h.stars)),
+                            area: draft(k("area"), h.area),
+                            type: draft(k("type"), h.type),
+                            pool: draft(k("pool"), h.pool ? "1" : "") === "1",
+                            breakfastIncluded: draft(k("bkf"), h.breakfastIncluded ? "1" : "") === "1",
+                            amenities: h.amenities,
                           },
                         },
                         `Saved ${h.id} ✓`
@@ -359,44 +359,50 @@ export default function AdminPage() {
                   >
                     Save
                   </button>
-                  <button
-                    onClick={() => run({ action: "delete-hotel", payload: { id: h.id } }, "Hotel removed")}
-                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-pink-300 hover:bg-white/20"
-                  >
-                    Remove
+                  <button onClick={() => run({ action: "delete-hotel", payload: { id: h.id } }, "Removed")} className={delCls}>
+                    ✕
                   </button>
                 </div>
               );
             })}
             <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-3 text-sm">
-              <input
-                placeholder="New hotel name"
-                className="min-w-64 flex-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white"
-                value={newHotel.name}
-                onChange={(e) => setNewHotel({ ...newHotel, name: e.target.value })}
-              />
-              <span className="text-slate-400">$</span>
-              <input
-                placeholder="rate"
-                className={inputCls}
-                value={newHotel.nightlyRate}
-                onChange={(e) => setNewHotel({ ...newHotel, nightlyRate: e.target.value })}
-              />
+              <input placeholder="New hotel / Airbnb name" className={`${txtCls} min-w-56 flex-1`} value={newHotel.name} onChange={(e) => setNewHotel({ ...newHotel, name: e.target.value })} />
+              <span className="text-xs text-slate-500">$</span>
+              <input placeholder="price" className={numCls} value={newHotel.price} onChange={(e) => setNewHotel({ ...newHotel, price: e.target.value })} />
+              <select className={selCls} value={newHotel.mode} onChange={(e) => setNewHotel({ ...newHotel, mode: e.target.value })}>
+                <option value="per_room_night">/night per room</option>
+                <option value="per_property_night_split">/night whole place (split)</option>
+              </select>
+              <select className={selCls} value={newHotel.type} onChange={(e) => setNewHotel({ ...newHotel, type: e.target.value })}>
+                <option value="hotel">🏨 hotel</option>
+                <option value="airbnb">🏡 airbnb</option>
+              </select>
+              <input placeholder="area" className={`${txtCls} w-40`} value={newHotel.area} onChange={(e) => setNewHotel({ ...newHotel, area: e.target.value })} />
               <button
                 onClick={() => {
-                  if (!newHotel.name || !newHotel.nightlyRate) return;
+                  if (!newHotel.name || !newHotel.price) return;
                   run(
                     {
                       action: "upsert-hotel",
-                      payload: { name: newHotel.name, nightlyRate: Number(newHotel.nightlyRate), breakfastIncluded: false, estimate: false },
+                      payload: {
+                        name: newHotel.name,
+                        price: Number(newHotel.price),
+                        priceMode: newHotel.mode,
+                        stars: Number(newHotel.stars),
+                        area: newHotel.area,
+                        type: newHotel.type,
+                        pool: false,
+                        breakfastIncluded: false,
+                        amenities: "",
+                      },
                     },
-                    "Hotel added ✓"
+                    "Added ✓"
                   );
-                  setNewHotel({ name: "", nightlyRate: "" });
+                  setNewHotel({ name: "", price: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
                 }}
                 className={btnCls}
               >
-                + Add hotel
+                + Add
               </button>
             </div>
           </div>
@@ -404,76 +410,83 @@ export default function AdminPage() {
 
         {/* Activities */}
         <section className={cardCls}>
-          <h2 className="font-bold text-white">Activity ticket prices</h2>
+          <h2 className="font-bold text-white">Activities</h2>
           <p className="mt-1 text-sm text-slate-400">Adult price also applies to kids 10+; kid price = ages 3–9.</p>
           <div className="mt-3 space-y-1.5">
-            {data?.activities
-              .filter((a) => a.adultPrice + a.childPrice > 0 || a.estimate)
-              .map((a) => {
-                const aKey = draftKey("aa", a.id);
-                const cKey = draftKey("ac", a.id);
-                return (
-                  <div key={a.id} className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="min-w-56 flex-1 text-slate-200">
-                      {a.star ? "⭐ " : ""}
-                      {a.name}
-                      {a.estimate && <span className="ml-1 text-xs text-slate-500">(~est.)</span>}
-                    </span>
-                    <span className="text-xs text-slate-500">adult $</span>
-                    <input className={inputCls} value={draft(aKey, a.adultPrice)} onChange={(e) => setDraft(aKey, e.target.value)} />
-                    <span className="text-xs text-slate-500">kid $</span>
-                    <input className={inputCls} value={draft(cKey, a.childPrice)} onChange={(e) => setDraft(cKey, e.target.value)} />
-                    <button
-                      onClick={() =>
-                        run(
-                          {
-                            action: "update-activity",
-                            payload: { id: a.id, adultPrice: Number(draft(aKey, a.adultPrice)), childPrice: Number(draft(cKey, a.childPrice)), estimate: false },
+            {data?.activities.map((a) => {
+              const k = (field: string) => draftKey("a", a.id, field);
+              return (
+                <div key={a.id} className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="min-w-52 flex-1 text-slate-200">
+                    {a.star ? "⭐ " : ""}
+                    {a.name}
+                    {a.estimate && <span className="ml-1 text-xs text-slate-500">(~est.)</span>}
+                  </span>
+                  <span className="text-xs text-slate-500">adult $</span>
+                  <input className={numCls} value={draft(k("ap"), a.adultPrice)} onChange={(e) => setDraft(k("ap"), e.target.value)} />
+                  <span className="text-xs text-slate-500">kid $</span>
+                  <input className={numCls} value={draft(k("cp"), a.childPrice)} onChange={(e) => setDraft(k("cp"), e.target.value)} />
+                  <select className={selCls} value={draft(k("age"), a.ageFit)} onChange={(e) => setDraft(k("age"), e.target.value)}>
+                    <option value="all">All ages</option>
+                    <option value="younger">Best 3–9</option>
+                    <option value="older">Best 10+</option>
+                    <option value="check">Check restrictions</option>
+                  </select>
+                  <select className={selCls} value={draft(k("area"), a.area)} onChange={(e) => setDraft(k("area"), e.target.value)}>
+                    <option value="orlando">Orlando</option>
+                    <option value="port">Near port</option>
+                    <option value="daytrip">Day trip</option>
+                  </select>
+                  <button
+                    onClick={() =>
+                      run(
+                        {
+                          action: "update-activity",
+                          payload: {
+                            id: a.id,
+                            adultPrice: Number(draft(k("ap"), a.adultPrice)),
+                            childPrice: Number(draft(k("cp"), a.childPrice)),
+                            ageFit: draft(k("age"), a.ageFit),
+                            area: draft(k("area"), a.area),
                           },
-                          `Saved ${a.name} ✓`
-                        )
-                      }
-                      className={btnCls}
-                    >
-                      Save
-                    </button>
-                  </div>
-                );
-              })}
+                        },
+                        `Saved ${a.name} ✓`
+                      )
+                    }
+                    className={btnCls}
+                  >
+                    Save
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         {/* Families */}
         <section className={cardCls}>
           <h2 className="font-bold text-white">Families</h2>
-          <p className="mt-1 text-sm text-slate-400">Kids 3–9 get child ticket pricing; kids 10+ pay adult ticket prices.</p>
+          <p className="mt-1 text-sm text-slate-400">
+            Kids 3–9 get child ticket pricing; kids 10+ pay adult ticket prices. Bags = checked bags for flights.
+          </p>
           <div className="mt-3 space-y-2">
             {data?.families.map((f) => {
-              const keys = {
-                name: draftKey("fn", f.id),
-                adults: draftKey("fa", f.id),
-                kids39: draftKey("fk", f.id),
-                kids10: draftKey("fK", f.id),
-                rooms: draftKey("fr", f.id),
-              };
+              const k = (field: string) => draftKey("f", f.id, field);
               return (
                 <div key={f.id} className="flex flex-wrap items-center gap-2 text-sm">
-                  <input
-                    className="w-40 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-white"
-                    value={draft(keys.name, f.name)}
-                    onChange={(e) => setDraft(keys.name, e.target.value)}
-                  />
+                  <input className={`${txtCls} w-40`} value={draft(k("name"), f.name)} onChange={(e) => setDraft(k("name"), e.target.value)} />
                   {(
                     [
-                      ["adults", keys.adults, f.adults],
-                      ["kids 3–9", keys.kids39, f.kids39],
-                      ["kids 10+", keys.kids10, f.kids10plus],
-                      ["rooms", keys.rooms, f.rooms],
+                      ["adults", "ad", f.adults],
+                      ["kids 3–9", "k9", f.kids39],
+                      ["kids 10+", "k10", f.kids10plus],
+                      ["rooms", "rm", f.rooms],
+                      ["bags", "bg", f.bags],
                     ] as const
                   ).map(([label, key, val]) => (
                     <label key={key} className="flex items-center gap-1 text-xs text-slate-400">
                       {label}
-                      <input className="w-12 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={draft(key, val)} onChange={(e) => setDraft(key, e.target.value)} />
+                      <input className="w-12 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={draft(k(key), val)} onChange={(e) => setDraft(k(key), e.target.value)} />
                     </label>
                   ))}
                   <button
@@ -483,11 +496,12 @@ export default function AdminPage() {
                           action: "update-family",
                           payload: {
                             id: f.id,
-                            name: draft(keys.name, f.name),
-                            adults: Number(draft(keys.adults, f.adults)),
-                            kids39: Number(draft(keys.kids39, f.kids39)),
-                            kids10plus: Number(draft(keys.kids10, f.kids10plus)),
-                            rooms: Number(draft(keys.rooms, f.rooms)),
+                            name: draft(k("name"), f.name),
+                            adults: Number(draft(k("ad"), f.adults)),
+                            kids39: Number(draft(k("k9"), f.kids39)),
+                            kids10plus: Number(draft(k("k10"), f.kids10plus)),
+                            rooms: Number(draft(k("rm"), f.rooms)),
+                            bags: Number(draft(k("bg"), f.bags)),
                           },
                         },
                         `Saved ${f.id} ✓`

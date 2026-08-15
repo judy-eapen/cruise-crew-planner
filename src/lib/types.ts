@@ -11,22 +11,37 @@ export interface DateOption {
   hotelNights: number;
 }
 
-export interface Flight {
+/** A real, bookable flight quote (organizer enters ~3 per option, cheapest-first surfaced). */
+export interface FlightQuote {
+  id: number;
   optionId: OptionId;
   origin: Origin;
-  airline: string; // e.g. "Frontier", "United" — multiple fares per option+origin
+  airline: string;
+  departTime: string; // e.g. "Sat 7:05am nonstop"
+  returnTime: string; // e.g. "Sun 8:40pm 1 stop"
   farePerPerson: number; // round trip; kids 2+ pay the same fare as adults
+  bagFee: number; // round trip, per checked bag ($0 = bags included)
   estimate: boolean;
   priceChecked: string;
 }
 
+export type HotelPriceMode = "per_room_night" | "per_property_night_split";
+
 export interface Hotel {
   id: string;
   name: string;
-  nightlyRate: number;
+  price: number; // per night — per room, or for the whole property (split across families)
+  priceMode: HotelPriceMode;
+  stars: number;
+  area: string; // e.g. "Lake Buena Vista", "Cocoa Beach / near port"
+  type: "hotel" | "airbnb";
+  pool: boolean;
   breakfastIncluded: boolean;
+  amenities: string;
   estimate: boolean;
 }
+
+export type AgeFit = "all" | "younger" | "older" | "check";
 
 export interface Activity {
   id: string;
@@ -35,6 +50,8 @@ export interface Activity {
   adultPrice: number; // adults AND kids 10+ pay this
   childPrice: number; // ages 3–9
   category: string;
+  ageFit: AgeFit; // all ages / best 3–9 / best 10+ / check height-age restrictions
+  area: "orlando" | "port" | "daytrip";
   star: boolean;
   estimate: boolean;
   note?: string;
@@ -47,7 +64,7 @@ export interface ItinerarySlot {
   date: string;
   dayLabel: string;
   slotType: SlotType;
-  activityId: string | null;
+  activityId: string | null; // the organizer's suggested activity (default build)
 }
 
 export interface Family {
@@ -57,17 +74,26 @@ export interface Family {
   kids39: number; // ages 3–9 → child ticket pricing
   kids10plus: number; // pay adult ticket prices
   rooms: number;
+  bags: number; // checked bags for the flight
   placeholder: boolean;
 }
 
 export interface TripData {
   source: "seed" | "db";
   dateOptions: DateOption[];
-  flights: Flight[];
+  flights: FlightQuote[];
   hotels: Hotel[];
   activities: Activity[];
   slots: ItinerarySlot[];
   families: Family[];
+}
+
+/** One family's (or the organizer's default) configuration of an option. */
+export interface Build {
+  flightId: number | null; // null → cheapest quote
+  preHotelId: string | null;
+  postHotelId: string | null;
+  activities: Record<string, string | null>; // date → activityId (free days only)
 }
 
 export interface VoteRecord {
