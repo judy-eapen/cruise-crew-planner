@@ -63,6 +63,7 @@ export async function POST(req: Request) {
                 out_arrive: f.outArrive,
                 ret_depart: f.retDepart,
                 ret_arrive: f.retArrive,
+                duration: f.duration,
                 fare_per_person: f.farePerPerson,
                 bag_fee: f.bagFee,
                 estimate: f.estimate,
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
       }
 
       case "add-quote": {
-        const { optionId, origin, airline, outDepart, outArrive, retDepart, retArrive, farePerPerson, bagFee } = payload;
+        const { optionId, origin, airline, outDepart, outArrive, retDepart, retArrive, duration, farePerPerson, bagFee } = payload;
         if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
         const { error } = await supabase.from("flights").insert({
           option_id: optionId,
@@ -163,6 +164,7 @@ export async function POST(req: Request) {
           out_arrive: String(outArrive ?? "").slice(0, 40) || "TBD",
           ret_depart: String(retDepart ?? "").slice(0, 40) || "TBD",
           ret_arrive: String(retArrive ?? "").slice(0, 40) || "TBD",
+          duration: String(duration ?? "").slice(0, 30) || "~2h 15m",
           fare_per_person: Number(farePerPerson),
           bag_fee: Number(bagFee ?? 50),
           estimate: false,
@@ -173,7 +175,7 @@ export async function POST(req: Request) {
       }
 
       case "update-quote": {
-        const { id, airline, origin, farePerPerson, bagFee, outDepart, outArrive, retDepart, retArrive } = payload;
+        const { id, airline, origin, farePerPerson, bagFee, outDepart, outArrive, retDepart, retArrive, duration } = payload;
         if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
         const { error } = await supabase
           .from("flights")
@@ -186,6 +188,7 @@ export async function POST(req: Request) {
             out_arrive: String(outArrive ?? "TBD").slice(0, 40),
             ret_depart: String(retDepart ?? "TBD").slice(0, 40),
             ret_arrive: String(retArrive ?? "TBD").slice(0, 40),
+            duration: String(duration ?? "~2h 15m").slice(0, 30),
             estimate: false,
             price_checked: today(),
           })

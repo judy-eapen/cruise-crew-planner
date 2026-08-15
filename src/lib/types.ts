@@ -21,6 +21,7 @@ export interface FlightQuote {
   outArrive: string; // e.g. "9:45 AM"
   retDepart: string; // e.g. "6:10 PM"
   retArrive: string; // e.g. "8:40 PM"
+  duration: string; // total flight time each way, e.g. "~2h 15m"
   farePerPerson: number; // round trip; kids 2+ pay the same fare as adults
   bagFee: number; // round trip, per checked bag ($0 = bags included)
   estimate: boolean;

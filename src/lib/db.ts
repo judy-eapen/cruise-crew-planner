@@ -45,6 +45,7 @@ const mapQuote = (r: any): FlightQuote => ({
   outArrive: r.out_arrive ?? "TBD",
   retDepart: r.ret_depart ?? r.return_time ?? "TBD",
   retArrive: r.ret_arrive ?? "TBD",
+  duration: r.duration ?? "~2h 15m",
   farePerPerson: Number(r.fare_per_person),
   bagFee: Number(r.bag_fee ?? 0),
   estimate: r.estimate,

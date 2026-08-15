@@ -51,6 +51,7 @@ const FLIGHTS: FlightQuote[] = DATE_OPTIONS.flatMap((o) =>
     outArrive: "TBD",
     retDepart: "TBD",
     retArrive: "TBD",
+    duration: "~2h 15m",
     farePerPerson: SEED_FARES[o.id][origin],
     bagFee: 50, // assumption: $50 per checked bag round trip until a real quote says otherwise
     estimate: true,

@@ -23,6 +23,7 @@ create table if not exists flights (
   out_arrive text default 'TBD',
   ret_depart text default 'TBD',
   ret_arrive text default 'TBD',
+  duration text default '~2h 15m',
   fare_per_person numeric not null,
   bag_fee numeric not null default 0,
   estimate boolean not null default true,

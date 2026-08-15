@@ -205,7 +205,7 @@ export default function BuilderSection({
       {/* 1 · Flights */}
       <h3 className="font-display mt-8 text-xl tracking-wide text-white">1 · Pick your flight</h3>
       <p className="text-xs text-slate-400">
-        Cheapest options as researched — sorted by what {familyLabel} would pay ({people} people, {party.bags} checked bag{party.bags !== 1 ? "s" : ""}).
+        Nonstop flights only · sorted by what {familyLabel} would pay ({people} people, {party.bags} checked bag{party.bags !== 1 ? "s" : ""}).
       </p>
       <div className="mt-3 grid grid-cols-1 gap-2">
         {quotes
@@ -226,7 +226,7 @@ export default function BuilderSection({
                   ✈️ {q.origin} → MCO · {q.airline}
                 </span>
                 <span className="text-xs text-slate-400">
-                  out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive}
+                  out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive} · {q.duration}
                 </span>
                 <span className="text-sm text-slate-300">
                   {q.estimate && "~"}

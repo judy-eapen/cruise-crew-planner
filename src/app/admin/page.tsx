@@ -24,7 +24,7 @@ export default function AdminPage() {
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newHotel, setNewHotel] = useState({ name: "", price: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
-  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "50" });
+  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
 
   const call = useCallback(
     async (body: AdminAction, code?: string) => {
@@ -190,7 +190,7 @@ export default function AdminPage() {
         <section className={cardCls}>
           <h2 className="font-bold text-white">Flight quotes</h2>
           <p className="mt-1 text-sm text-slate-400">
-            ~3 real quotes per option (the app surfaces them cheapest-first). Fare = round trip per person; bag
+            ~3 real quotes per option, NONSTOP flights only (the app surfaces them cheapest-first). Fare = round trip per person; bag
             fee = round trip per checked bag ($0 if bags fly free, e.g. Southwest). Saving stamps today&apos;s
             date and clears the ~ estimate flag. Delete the TBD placeholders as real quotes land.
           </p>
@@ -227,6 +227,7 @@ export default function AdminPage() {
                         <input className={`${txtCls} w-24`} placeholder="6:10 PM" value={draft(k("rd"), f.retDepart)} onChange={(e) => setDraft(k("rd"), e.target.value)} />
                         <span className="text-xs text-slate-500">→</span>
                         <input className={`${txtCls} w-24`} placeholder="8:40 PM" value={draft(k("ra"), f.retArrive)} onChange={(e) => setDraft(k("ra"), e.target.value)} />
+                        <input className={`${txtCls} w-20`} placeholder="~2h 15m" value={draft(k("du"), f.duration)} onChange={(e) => setDraft(k("du"), e.target.value)} />
                         <span className="text-xs text-slate-500">fare $</span>
                         <input className={numCls} value={draft(k("fare"), f.farePerPerson)} onChange={(e) => setDraft(k("fare"), e.target.value)} />
                         <span className="text-xs text-slate-500">bag $</span>
@@ -246,6 +247,7 @@ export default function AdminPage() {
                                   outArrive: draft(k("oa"), f.outArrive),
                                   retDepart: draft(k("rd"), f.retDepart),
                                   retArrive: draft(k("ra"), f.retArrive),
+                                  duration: draft(k("du"), f.duration),
                                 },
                               },
                               `Saved ${f.airline} quote ✓`
@@ -283,6 +285,7 @@ export default function AdminPage() {
             <input placeholder="out arr 9:45 AM" className={`${txtCls} w-28`} value={newQuote.outArrive} onChange={(e) => setNewQuote({ ...newQuote, outArrive: e.target.value })} />
             <input placeholder="back dep 6:10 PM" className={`${txtCls} w-28`} value={newQuote.retDepart} onChange={(e) => setNewQuote({ ...newQuote, retDepart: e.target.value })} />
             <input placeholder="back arr 8:40 PM" className={`${txtCls} w-28`} value={newQuote.retArrive} onChange={(e) => setNewQuote({ ...newQuote, retArrive: e.target.value })} />
+            <input placeholder="dur ~2h 15m" className={`${txtCls} w-24`} value={newQuote.duration} onChange={(e) => setNewQuote({ ...newQuote, duration: e.target.value })} />
             <span className="text-xs text-slate-500">fare $</span>
             <input className={numCls} value={newQuote.fare} onChange={(e) => setNewQuote({ ...newQuote, fare: e.target.value })} />
             <span className="text-xs text-slate-500">bag $</span>
@@ -301,13 +304,14 @@ export default function AdminPage() {
                       outArrive: newQuote.outArrive,
                       retDepart: newQuote.retDepart,
                       retArrive: newQuote.retArrive,
+                      duration: newQuote.duration,
                       farePerPerson: Number(newQuote.fare),
                       bagFee: Number(newQuote.bagFee || 0),
                     },
                   },
                   `Added ${newQuote.airline} quote ✓`
                 );
-                setNewQuote({ ...newQuote, airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", fare: "", bagFee: "50" });
+                setNewQuote({ ...newQuote, airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
               }}
               className={btnCls}
             >
