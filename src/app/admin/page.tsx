@@ -207,11 +207,18 @@ export default function AdminPage() {
                     const k = (field: string) => draftKey("q", f.id, field);
                     return (
                       <div key={f.id} className="flex flex-wrap items-center gap-2 text-sm">
-                        <span className="w-12 font-semibold text-slate-200">{f.origin}</span>
-                        <span className="w-24 text-slate-200">
-                          {f.airline}
-                          {f.estimate && <span className="text-slate-500"> ~</span>}
-                        </span>
+                        <select className={selCls} value={draft(k("or"), f.origin)} onChange={(e) => setDraft(k("or"), e.target.value)}>
+                          {["IAD", "DCA", "BWI"].map((o) => (
+                            <option key={o}>{o}</option>
+                          ))}
+                        </select>
+                        <input
+                          className={`${txtCls} w-28`}
+                          placeholder="Airline"
+                          value={draft(k("al"), f.airline)}
+                          onChange={(e) => setDraft(k("al"), e.target.value)}
+                        />
+                        {f.estimate && <span className="text-xs text-slate-500">~</span>}
                         <span className="text-xs text-slate-500">out</span>
                         <input className={`${txtCls} w-24`} placeholder="7:05 AM" value={draft(k("od"), f.outDepart)} onChange={(e) => setDraft(k("od"), e.target.value)} />
                         <span className="text-xs text-slate-500">→</span>
@@ -231,6 +238,8 @@ export default function AdminPage() {
                                 action: "update-quote",
                                 payload: {
                                   id: f.id,
+                                  airline: draft(k("al"), f.airline),
+                                  origin: draft(k("or"), f.origin),
                                   farePerPerson: Number(draft(k("fare"), f.farePerPerson)),
                                   bagFee: Number(draft(k("bag"), f.bagFee)),
                                   outDepart: draft(k("od"), f.outDepart),

@@ -173,10 +173,13 @@ export async function POST(req: Request) {
       }
 
       case "update-quote": {
-        const { id, farePerPerson, bagFee, outDepart, outArrive, retDepart, retArrive } = payload;
+        const { id, airline, origin, farePerPerson, bagFee, outDepart, outArrive, retDepart, retArrive } = payload;
+        if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
         const { error } = await supabase
           .from("flights")
           .update({
+            airline: String(airline).trim().slice(0, 60),
+            origin: ["IAD", "DCA", "BWI"].includes(origin) ? origin : undefined,
             fare_per_person: Number(farePerPerson),
             bag_fee: Number(bagFee ?? 50),
             out_depart: String(outDepart ?? "TBD").slice(0, 40),
