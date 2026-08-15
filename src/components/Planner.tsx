@@ -9,18 +9,23 @@ import ItineraryTab from "./ItineraryTab";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
 
-const TABS = ["Compare", "Itinerary", "Group", "Vote"] as const;
-type Tab = (typeof TABS)[number];
+const SECTIONS = [
+  { id: "compare", label: "Compare" },
+  { id: "itinerary", label: "Itinerary" },
+  { id: "group", label: "Group" },
+  { id: "vote", label: "Vote" },
+] as const;
 
 export default function Planner() {
   // Render instantly on bundled seed data; swap in DB data when it arrives.
   const [data, setData] = useState<TripData>(SEED);
-  const [tab, setTab] = useState<Tab>("Compare");
+  const [active, setActive] = useState<string>("compare");
   const [origin, setOrigin] = useState<Origin>("BWI");
   const [airlinePref, setAirlinePref] = useState<string>(CHEAPEST);
   const [hotelId, setHotelId] = useState(SEED.hotels[0].id);
   const [familyId, setFamilyId] = useState(SEED.families[0].id);
   const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1 });
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     fetch("/api/data")
@@ -33,7 +38,28 @@ export default function Planner() {
         }
       })
       .catch(() => {});
+    setShowGuide(!window.localStorage.getItem("ccp-guide-dismissed"));
   }, []);
+
+  // Scroll-spy: highlight the section currently in view.
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(e.target.id);
+      },
+      { rootMargin: "-35% 0px -60% 0px" }
+    );
+    SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const dismissGuide = () => {
+    window.localStorage.setItem("ccp-guide-dismissed", "1");
+    setShowGuide(false);
+  };
 
   const selectedFamily = data.families.find((f) => f.id === familyId);
   const party: PartySize = familyId === "custom" || !selectedFamily ? custom : partyFromFamily(selectedFamily);
@@ -49,6 +75,24 @@ export default function Planner() {
   );
   const familyLabel = familyId === "custom" || !selectedFamily ? "Custom family" : selectedFamily.name;
   const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
+  const hasEstimates =
+    data.flights.some((f) => f.estimate) ||
+    data.hotels.some((h) => h.estimate) ||
+    data.activities.some((a) => a.estimate && a.adultPrice + a.childPrice > 0);
+
+  const navLink = (id: string, label: string, mobile = false) => (
+    <a
+      key={id}
+      href={`#${id}`}
+      className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+        active === id
+          ? "bg-white/15 text-amber-200" + (mobile ? "" : " shadow-inner")
+          : "text-slate-300 hover:bg-white/5 hover:text-white"
+      } ${mobile ? "whitespace-nowrap" : ""}`}
+    >
+      {label}
+    </a>
+  );
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] text-slate-100">
@@ -57,64 +101,35 @@ export default function Planner() {
       <div className="pointer-events-none absolute top-[40%] left-[-8%] h-80 w-80 rounded-full bg-fuchsia-500/15 blur-3xl" />
       <div className="pointer-events-none absolute bottom-[-10%] right-[22%] h-72 w-72 rounded-full bg-indigo-400/15 blur-3xl" />
       {/* Starfield */}
-      <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(1.5px_1.5px_at_12%_18%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_28%_8%,#fde68a_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_46%_26%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_64%_12%,#fff_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_81%_22%,#fde68a_50%,transparent_51%),radial-gradient(1px_1px_at_92%_9%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_73%_38%,#fff_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_8%_44%,#fde68a_50%,transparent_51%)]" />
+      <div className="pointer-events-none absolute inset-0 h-[900px] opacity-40 [background-image:radial-gradient(1.5px_1.5px_at_12%_18%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_28%_8%,#fde68a_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_46%_26%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_64%_12%,#fff_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_81%_22%,#fde68a_50%,transparent_51%),radial-gradient(1px_1px_at_92%_9%,#fff_50%,transparent_51%),radial-gradient(1px_1px_at_73%_38%,#fff_50%,transparent_51%),radial-gradient(1.5px_1.5px_at_8%_44%,#fde68a_50%,transparent_51%)]" />
 
-      {/* Top nav */}
+      {/* Top nav — anchor links, not tabs */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0e2a]/75 backdrop-blur-md">
         <div className="flex w-full items-center justify-between gap-4 px-5 py-3 lg:px-12">
-          <span className="flex items-center gap-2 text-xl tracking-wide">
+          <a href="#top" className="flex items-center gap-2 text-xl tracking-wide">
             <span className="text-2xl">🏰</span>
             <span className="font-display">
               Cruise<span className="text-amber-300">Crew</span>
             </span>
             <span className="text-sm">✨</span>
-          </span>
-          <nav className="hidden gap-1 sm:flex">
-            {TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                  tab === t ? "bg-white/15 text-amber-200 shadow-inner" : "text-slate-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </nav>
+          </a>
+          <nav className="hidden gap-1 sm:flex">{SECTIONS.map((s) => navLink(s.id, s.label))}</nav>
           <span className="hidden items-center gap-2 rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-200 md:flex">
             ⚓ Booked · Nov 2 → Nov 6
           </span>
         </div>
-        {/* Mobile tabs */}
         <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                tab === t ? "bg-white/15 text-amber-200" : "text-slate-300"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+          {SECTIONS.map((s) => navLink(s.id, s.label, true))}
         </nav>
       </header>
 
       {/* Hero */}
-      <section className="relative w-full overflow-hidden px-5 pt-10 pb-10 lg:px-12 lg:pt-12">
-        {/* Castle silhouette + fireworks scene */}
+      <section id="top" className="relative w-full overflow-hidden px-5 pt-10 pb-8 lg:px-12 lg:pt-12">
         <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] sm:block">
           <div className="absolute right-[30%] top-[8%] text-amber-300 firework" />
           <div className="absolute right-[12%] top-[22%] text-pink-400 firework" style={{ animationDelay: "0.9s" }} />
           <div className="absolute right-[46%] top-[30%] text-cyan-300 firework" style={{ animationDelay: "1.7s" }} />
-          <svg
-            viewBox="0 0 460 260"
-            className="absolute bottom-0 right-0 h-[88%] w-auto opacity-90"
-            aria-hidden="true"
-          >
-            {/* glow behind the castle */}
+          <svg viewBox="0 0 460 260" className="absolute bottom-0 right-0 h-[88%] w-auto opacity-90" aria-hidden="true">
             <ellipse cx="260" cy="235" rx="200" ry="90" fill="url(#castleGlow)" />
             <defs>
               <radialGradient id="castleGlow">
@@ -123,10 +138,8 @@ export default function Planner() {
               </radialGradient>
             </defs>
             <g fill="#080b24">
-              {/* outer walls */}
               <rect x="80" y="190" width="90" height="70" />
               <rect x="290" y="190" width="90" height="70" />
-              {/* wall crenellations */}
               <rect x="80" y="182" width="12" height="10" />
               <rect x="104" y="182" width="12" height="10" />
               <rect x="128" y="182" width="12" height="10" />
@@ -135,29 +148,23 @@ export default function Planner() {
               <rect x="314" y="182" width="12" height="10" />
               <rect x="338" y="182" width="12" height="10" />
               <rect x="362" y="182" width="12" height="10" />
-              {/* outer towers */}
               <rect x="62" y="150" width="24" height="110" />
               <polygon points="60,150 88,150 74,112" />
               <rect x="374" y="150" width="24" height="110" />
               <polygon points="372,150 400,150 386,112" />
-              {/* mid towers */}
               <rect x="170" y="130" width="26" height="130" />
               <polygon points="167,130 199,130 183,86" />
               <rect x="264" y="130" width="26" height="130" />
               <polygon points="261,130 293,130 277,86" />
-              {/* main keep */}
               <rect x="196" y="150" width="68" height="110" />
               <rect x="196" y="142" width="10" height="8" />
               <rect x="214" y="142" width="10" height="8" />
               <rect x="232" y="142" width="10" height="8" />
               <rect x="250" y="142" width="10" height="8" />
-              {/* central spire */}
               <rect x="216" y="70" width="28" height="80" />
               <polygon points="212,70 248,70 230,18" />
-              {/* flag */}
               <line x1="230" y1="18" x2="230" y2="4" stroke="#080b24" strokeWidth="2.5" />
               <polygon points="230,4 246,9 230,14" fill="#f472b6" />
-              {/* windows */}
               <g fill="#fde68a" className="twinkle">
                 <rect x="224" y="92" width="5" height="9" rx="2" />
                 <rect x="233" y="92" width="5" height="9" rx="2" />
@@ -167,7 +174,6 @@ export default function Planner() {
                 <rect x="227" y="180" width="6" height="11" rx="2" />
                 <rect x="242" y="180" width="6" height="11" rx="2" />
               </g>
-              {/* gate */}
               <path d="M218 260 v-28 a12 12 0 0 1 24 0 v28 z" fill="#1e1b4b" />
             </g>
           </svg>
@@ -181,8 +187,7 @@ export default function Planner() {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
             The cruise is booked — Mon <span className="font-semibold text-white">Nov 2</span> (board PM) to Fri{" "}
             <span className="font-semibold text-white">Nov 6</span> (off 9am). Six ways to wrap the magic
-            around it. Pick your family. See <span className="font-semibold text-amber-200">your</span> price.
-            Vote.
+            around it — scroll to compare them, see the day-by-day plans, and vote.
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-[0.35em] text-amber-300/80">
             14 adults · 14 kids · one castle to storm
@@ -190,9 +195,46 @@ export default function Planner() {
         </div>
       </section>
 
-      {/* Selector bar */}
+      {/* First-visit guide */}
+      {showGuide && (
+        <div className="relative w-full px-5 pb-4 lg:px-12">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
+            <span className="font-bold">How this works:</span>
+            <span>
+              <span className="font-bold text-amber-300">①</span> Pick <em>your</em> family below
+            </span>
+            <span>
+              <span className="font-bold text-amber-300">②</span> Scroll to compare the 6 options
+            </span>
+            <span>
+              <span className="font-bold text-amber-300">③</span> Vote using your family&apos;s private link
+            </span>
+            <button
+              onClick={dismissGuide}
+              className="ml-auto rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-indigo-950 hover:bg-amber-200"
+            >
+              Got it ✓
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Selector bar — sticky so your choices follow you down the page */}
       <div className="sticky top-[52px] z-20 w-full px-5 sm:top-[56px] lg:px-12">
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2.5 backdrop-blur-md">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#171247]/80 p-2.5 backdrop-blur-md">
+          <select
+            value={familyId}
+            onChange={(e) => setFamilyId(e.target.value)}
+            className="rounded-full border border-amber-300/50 bg-white/5 px-3.5 py-1.5 text-sm font-bold text-amber-100 [&>option]:text-slate-900"
+            aria-label="Family"
+          >
+            {data.families.map((f) => (
+              <option key={f.id} value={f.id}>
+                👨‍👩‍👧‍👦 {f.name} ({f.adults}A + {f.kids39 + f.kids10plus}K)
+              </option>
+            ))}
+            <option value="custom">✏️ Custom…</option>
+          </select>
           <div className="flex overflow-hidden rounded-full border border-white/15 bg-white/5">
             {(["IAD", "DCA", "BWI"] as Origin[]).map((o) => (
               <button
@@ -233,19 +275,6 @@ export default function Planner() {
               </option>
             ))}
           </select>
-          <select
-            value={familyId}
-            onChange={(e) => setFamilyId(e.target.value)}
-            className="rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-slate-100 [&>option]:text-slate-900"
-            aria-label="Family"
-          >
-            {data.families.map((f) => (
-              <option key={f.id} value={f.id}>
-                👨‍👩‍👧‍👦 {f.name} ({f.adults}A + {f.kids39 + f.kids10plus}K)
-              </option>
-            ))}
-            <option value="custom">✏️ Custom…</option>
-          </select>
           {familyId === "custom" && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5">
               {(
@@ -271,17 +300,40 @@ export default function Planner() {
             </div>
           )}
         </div>
+        {hasEstimates && (
+          <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">
+            <span className="font-bold text-amber-300">~</span> Prices are estimates, checked {priceChecked} —
+            final fares confirmed before booking
+          </p>
+        )}
       </div>
 
-      {/* Content */}
-      <main className="relative w-full px-5 pt-6 pb-16 lg:px-12">
-        {tab === "Compare" && <CompareTab costs={costs} familyLabel={familyLabel} />}
-        {tab === "Itinerary" && (
+      {/* One long page — sections in narrative order */}
+      <main className="relative w-full space-y-16 px-5 pt-10 pb-16 lg:px-12">
+        <section id="compare" className="scroll-mt-40">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">01 · The options</p>
+          <CompareTab costs={costs} familyLabel={familyLabel} />
+        </section>
+
+        <section id="itinerary" className="scroll-mt-40">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">02 · Day by day</p>
+          <h2 className="font-display mb-4 text-2xl tracking-wide text-white">
+            What each option actually looks like
+          </h2>
           <ItineraryTab data={data} origin={origin} airlinePref={airlinePref} hotelId={hotelId} party={party} familyLabel={familyLabel} />
-        )}
-        {tab === "Group" && <GroupTab data={data} origin={origin} airlinePref={airlinePref} hotelId={hotelId} />}
-        {tab === "Vote" && <VoteTab data={data} />}
-        <p className="mt-12 border-t border-white/10 pt-4 text-xs text-slate-400">
+        </section>
+
+        <section id="group" className="scroll-mt-40">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">03 · The whole crew</p>
+          <GroupTab data={data} origin={origin} airlinePref={airlinePref} hotelId={hotelId} />
+        </section>
+
+        <section id="vote" className="scroll-mt-40">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">04 · Decide</p>
+          <VoteTab data={data} />
+        </section>
+
+        <p className="border-t border-white/10 pt-4 text-xs text-slate-400">
           Prices checked {priceChecked} · ~ marks estimated prices pending confirmation · park child pricing =
           ages 3–9; kids 10+ pay adult prices; all kids pay adult airfare
         </p>
