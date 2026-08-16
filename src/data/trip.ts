@@ -56,6 +56,7 @@ const FLIGHTS: FlightQuote[] = DATE_OPTIONS.flatMap((o) =>
     bagFee: 50, // assumption: $50 per checked bag round trip until a real quote says otherwise
     estimate: true,
     priceChecked: PRICE_CHECKED,
+    source: "manual" as const,
   }))
 );
 

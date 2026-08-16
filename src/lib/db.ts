@@ -50,6 +50,7 @@ const mapQuote = (r: any): FlightQuote => ({
   bagFee: Number(r.bag_fee ?? 0),
   estimate: r.estimate,
   priceChecked: r.price_checked,
+  source: r.source === "api" ? "api" : "manual",
 });
 const mapHotel = (r: any): Hotel => ({
   id: r.id,

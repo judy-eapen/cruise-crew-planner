@@ -26,6 +26,8 @@ export interface FlightQuote {
   bagFee: number; // round trip, per checked bag ($0 = bags included)
   estimate: boolean;
   priceChecked: string;
+  /** 'manual' = hand-entered, protected from refreshes; 'api' = fetched, replaced on refresh. */
+  source: "manual" | "api";
 }
 
 export type HotelPriceMode = "per_room_night" | "per_property_night_split";

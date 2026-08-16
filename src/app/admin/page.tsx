@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "", shf: "7", hbr: "", hbd: "", hba: "", hsl: "" });
   const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
+  const [fareWin, setFareWin] = useState({ out: "", back: "" }); // SerpApi hour windows, e.g. "6,12"
+  const [refreshing, setRefreshing] = useState(false);
 
   const call = useCallback(
     async (body: AdminAction, code?: string) => {
@@ -87,6 +89,33 @@ export default function AdminPage() {
     } catch (e) {
       setStatus(`⚠ ${e instanceof Error ? e.message : "Failed"}`);
     }
+  };
+
+  // Live fares: one API call per option (sequential) so progress is visible and
+  // no single request outlives Vercel's window. Manual quotes are never touched.
+  const refreshFares = async (optionIds: string[]) => {
+    setRefreshing(true);
+    let totalAdded = 0;
+    let totalSearches = 0;
+    const problems: string[] = [];
+    for (const id of optionIds) {
+      setStatus(`↻ Option ${id}: searching Google Flights…${totalAdded ? ` (${totalAdded} quotes so far)` : ""}`);
+      try {
+        const r = await call({ action: "refresh-fares", payload: { optionId: id, outboundTimes: fareWin.out.trim(), returnTimes: fareWin.back.trim() } });
+        totalAdded += r.added ?? 0;
+        totalSearches += r.searches ?? 0;
+        if (r.warnings?.length) problems.push(...r.warnings.map((w: string) => `${id}: ${w}`));
+        if (!r.added) problems.push(`${id}: no quotes found`);
+      } catch (e) {
+        problems.push(`${id}: ${e instanceof Error ? e.message : "failed"}`);
+      }
+    }
+    setStatus(
+      `✓ Fetched ${totalAdded} fresh quotes (${totalSearches} SerpApi searches used)` +
+        (problems.length ? ` · ⚠ ${problems.join(" · ")}` : "")
+    );
+    setRefreshing(false);
+    await refresh();
   };
 
   const draftKey = (...parts: (string | number)[]) => parts.join("|");
@@ -219,10 +248,37 @@ export default function AdminPage() {
             fee = round trip per checked bag ($0 if bags fly free, e.g. Southwest). Saving stamps today&apos;s
             date and clears the ~ estimate flag. Delete the TBD placeholders as real quotes land.
           </p>
+          {/* Live fares via SerpApi */}
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm">
+            <span className="font-bold text-cyan-200">🔄 Live fares</span>
+            <span className="text-xs text-slate-400">out window</span>
+            <input className={`${txtCls} w-16`} placeholder="6,12" value={fareWin.out} onChange={(e) => setFareWin({ ...fareWin, out: e.target.value })} title="Depart-hour window, 24h: 6,12 = 6am–noon. Blank = any time." />
+            <span className="text-xs text-slate-400">back window</span>
+            <input className={`${txtCls} w-16`} placeholder="15,23" value={fareWin.back} onChange={(e) => setFareWin({ ...fareWin, back: e.target.value })} title="Return depart-hour window. Blank = any time. Off-ship days auto-floor to 1 PM." />
+            <button
+              onClick={() => refreshFares(data?.dateOptions.map((o) => o.id) ?? [])}
+              disabled={refreshing}
+              className={`${btnCls} disabled:opacity-50`}
+            >
+              {refreshing ? "Fetching…" : "↻ Refresh all 6 options"}
+            </button>
+            <span className="text-xs text-slate-500">
+              nonstop only · no 737 MAX 8 · top 4 + cheapest Delta per option · all ≈ 40 of your 100 free monthly
+              searches — the per-option ↻ buttons (~7 each) stretch the quota · ✍️ manual quotes are never touched
+            </span>
+          </div>
           {data?.dateOptions.map((o) => (
             <div key={o.id} className="mt-4 border-t border-white/10 pt-3">
-              <p className="text-sm font-bold text-amber-200">
+              <p className="flex items-center gap-2 text-sm font-bold text-amber-200">
                 Option {o.id} · {o.departDate.slice(5)} → {o.returnDate.slice(5)}
+                <button
+                  onClick={() => refreshFares([o.id])}
+                  disabled={refreshing}
+                  className="rounded-full bg-cyan-400/20 px-2 py-0.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/30 disabled:opacity-50"
+                  title="Fetch fresh fares for just this option (~7 searches)"
+                >
+                  ↻ fetch live
+                </button>
               </p>
               <div className="mt-2 space-y-2">
                 {data.flights
@@ -232,6 +288,14 @@ export default function AdminPage() {
                     const k = (field: string) => draftKey("q", f.id, field);
                     return (
                       <div key={f.id} className="flex flex-wrap items-center gap-2 text-sm">
+                        <span
+                          className={`rounded-full px-1.5 py-px text-[10px] font-bold ${
+                            f.source === "api" ? "bg-cyan-400/20 text-cyan-300" : "bg-amber-300/20 text-amber-200"
+                          }`}
+                          title={f.source === "api" ? "Fetched from Google Flights — replaced on the next refresh (editing it makes it manual)" : "Hand-entered — refreshes never touch it"}
+                        >
+                          {f.source === "api" ? "🤖" : "✍️"}
+                        </span>
                         <select className={selCls} value={draft(k("or"), f.origin)} onChange={(e) => setDraft(k("or"), e.target.value)}>
                           {["IAD", "DCA", "BWI"].map((o) => (
                             <option key={o}>{o}</option>

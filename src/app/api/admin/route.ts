@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { checkAdminPasscode, getSupabase } from "@/lib/db";
+import { fetchQuotesForOption } from "@/lib/serpapi";
 import { SEED } from "@/data/trip";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // fare refreshes make several sequential SerpApi calls
 
 const newToken = () => randomBytes(5).toString("hex"); // 10-char vote-link token
 const today = () => new Date().toISOString().slice(0, 10);
@@ -220,6 +222,8 @@ export async function POST(req: Request) {
             duration: String(duration ?? "~2h 15m").slice(0, 30),
             estimate: false,
             price_checked: today(),
+            // Hand-editing a fetched row adopts it as manual so refreshes can't wipe the edit.
+            source: "manual",
           })
           .eq("id", id);
         if (error) throw new Error(error.message);
@@ -230,6 +234,58 @@ export async function POST(req: Request) {
         const { error } = await supabase.from("flights").delete().eq("id", payload.id);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
+      }
+
+      // Live fares via SerpApi Google Flights — ONE option per call (the client
+      // loops so each request stays under Vercel's time limit and shows progress).
+      // Only rows with source='api' are ever replaced; manual rows are untouchable.
+      case "refresh-fares": {
+        const { optionId, outboundTimes, returnTimes } = payload;
+        const { data: opt, error: optErr } = await supabase
+          .from("date_options")
+          .select("id,depart_date,return_date,post_nights")
+          .eq("id", optionId)
+          .single();
+        if (optErr || !opt) throw new Error(`Unknown option: ${optionId}`);
+
+        // Off-ship-9am options (no post-cruise nights): the return flight can't
+        // realistically leave before ~1 PM, so enforce a 13:00 floor.
+        let retWin = String(returnTimes ?? "");
+        if (opt.post_nights === 0) {
+          const [start, end] = /^\d{1,2},\d{1,2}$/.test(retWin) ? retWin.split(",").map(Number) : [13, 23];
+          retWin = `${Math.max(13, start)},${Math.max(14, end)}`;
+        }
+
+        const result = await fetchQuotesForOption(opt.depart_date, opt.return_date, String(outboundTimes ?? ""), retWin);
+        if (result.quotes.length) {
+          const del = await supabase.from("flights").delete().eq("option_id", opt.id).eq("source", "api");
+          if (del.error) throw new Error(del.error.message);
+          const ins = await supabase.from("flights").insert(
+            result.quotes.map((q) => ({
+              option_id: opt.id,
+              origin: q.origin,
+              airline: q.airline,
+              out_depart: q.outDepart,
+              out_arrive: q.outArrive,
+              ret_depart: q.retDepart,
+              ret_arrive: q.retArrive,
+              duration: q.duration,
+              fare_per_person: q.farePerPerson,
+              bag_fee: q.bagFee,
+              estimate: false,
+              price_checked: today(),
+              source: "api",
+            }))
+          );
+          if (ins.error) throw new Error(ins.error.message);
+        }
+        return NextResponse.json({
+          ok: true,
+          optionId: opt.id,
+          added: result.quotes.length,
+          searches: result.searches,
+          warnings: result.warnings,
+        });
       }
 
       case "upsert-hotel": {
