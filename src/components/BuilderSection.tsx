@@ -99,9 +99,10 @@ export default function BuilderSection({
     post: option.postNights > 0 ? `Nov 6 → ${shortDate(option.returnDate)} · ${option.postNights} night${option.postNights > 1 ? "s" : ""}` : null,
   };
 
-  const hotelCard = (h: Hotel, segment: "pre" | "post", nights: number) => {
+  const hotelCard = (h: Hotel, segment: "pre" | "post", nights: number, minCost: number) => {
     const selected = (segment === "pre" ? build.preHotelId : build.postHotelId) === h.id;
     const segCost = hotelSegmentCost(h, segment, nights, party);
+    const isCheapest = segCost === minCost;
     const stay = segmentStay(h, segment, nights);
     const rateText = stay ? `${stay.label}: ${fmt(stay.total)}` : "";
     return (
@@ -111,7 +112,11 @@ export default function BuilderSection({
           onUpdateBuild(segment === "pre" ? { ...build, preHotelId: h.id } : { ...build, postHotelId: h.id })
         }
         className={`rounded-2xl border p-4 text-left transition ${
-          selected ? "border-amber-300 bg-amber-300/10" : "border-white/10 bg-white/5 hover:border-white/30"
+          selected
+            ? "border-amber-300 bg-amber-300/10"
+            : h.type === "airbnb"
+              ? "border-emerald-300/25 bg-emerald-400/[0.06] hover:border-emerald-300/60"
+              : "border-white/10 bg-white/5 hover:border-white/30"
         }`}
       >
         <p className={`font-bold ${selected ? "text-amber-200" : "text-white"}`}>
@@ -158,9 +163,51 @@ export default function BuilderSection({
           {h.estimate && "~"}
           {rateText}
           {h.priceMode === "per_property_night_split" ? ` whole place, split ${h.sharedFamilies} ways` : "/room for the stay"}{" "}
-          → <span className="font-bold">{fmt(segCost)}</span> for {familyLabel}
+          → <span className="font-bold">{fmt(segCost)}</span> for {familyLabel}{" "}
+          {isCheapest ? (
+            <span className="ml-1 rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+              💰 cheapest
+            </span>
+          ) : (
+            <span className="ml-1 text-[11px] text-slate-500">+{fmt(segCost - minCost)} vs cheapest</span>
+          )}
         </p>
       </button>
+    );
+  };
+
+  // Houses and hotels rendered as separate, labeled clusters — cheapest first.
+  const segmentBlock = (segment: "pre" | "post", nights: number, header: string) => {
+    const list = hotelsForSegment(data.hotels, segment, nights);
+    if (!list.length) return null;
+    const costOf = (h: Hotel) => hotelSegmentCost(h, segment, nights, party);
+    const minCost = Math.min(...list.map(costOf));
+    const houses = list.filter((h) => h.type === "airbnb").sort((a, b) => costOf(a) - costOf(b));
+    const hotelsOnly = list.filter((h) => h.type !== "airbnb").sort((a, b) => costOf(a) - costOf(b));
+    return (
+      <>
+        <p className="mt-5 text-sm font-semibold text-slate-300">{header}</p>
+        {houses.length > 0 && (
+          <>
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300/80">
+              🏡 Whole houses · one booking, cost split across families
+            </p>
+            <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {houses.map((h) => hotelCard(h, segment, nights, minCost))}
+            </div>
+          </>
+        )}
+        {hotelsOnly.length > 0 && (
+          <>
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              🏨 Hotels · per room, each family books their own
+            </p>
+            <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {hotelsOnly.map((h) => hotelCard(h, segment, nights, minCost))}
+            </div>
+          </>
+        )}
+      </>
     );
   };
 
@@ -253,22 +300,8 @@ export default function BuilderSection({
 
       {/* 1 · Hotels, two segments */}
       <h3 className="font-display mt-8 text-xl tracking-wide text-white">1 · Pick your hotels</h3>
-      {segDates.pre && (
-        <>
-          <p className="mt-2 text-sm font-semibold text-slate-300">🌙 Before the cruise · {segDates.pre}</p>
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {hotelsForSegment(data.hotels, "pre", option.preNights).map((h) => hotelCard(h, "pre", option.preNights))}
-          </div>
-        </>
-      )}
-      {segDates.post && (
-        <>
-          <p className="mt-4 text-sm font-semibold text-slate-300">🌅 After the cruise · {segDates.post}</p>
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {hotelsForSegment(data.hotels, "post", option.postNights).map((h) => hotelCard(h, "post", option.postNights))}
-          </div>
-        </>
-      )}
+      {segDates.pre && segmentBlock("pre", option.preNights, `🌙 Before the cruise · ${segDates.pre}`)}
+      {segDates.post && segmentBlock("post", option.postNights, `🌅 After the cruise · ${segDates.post}`)}
       {!segDates.pre && !segDates.post && <p className="mt-2 text-sm text-slate-400">No hotel nights for this option.</p>}
 
       {/* 3 · Activities per free day */}
