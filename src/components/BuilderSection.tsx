@@ -101,7 +101,8 @@ export default function BuilderSection({
 
   const hotelCard = (h: Hotel, segment: "pre" | "post", nights: number) => {
     const selected = (segment === "pre" ? build.preHotelId : build.postHotelId) === h.id;
-    const segCost = hotelSegmentCost(h, nights, party, familyCount);
+    const segCost = hotelSegmentCost(h, segment, nights, party, familyCount);
+    const rate = segment === "pre" ? h.pricePre : h.pricePost;
     return (
       <button
         key={`${segment}-${h.id}`}
@@ -124,8 +125,8 @@ export default function BuilderSection({
         <p className="mt-1.5 text-sm text-amber-200">
           {h.estimate && "~"}
           {h.priceMode === "per_property_night_split"
-            ? `${fmt(h.price)}/night whole place, split ${familyCount} ways`
-            : `${fmt(h.price)}/night per room`}{" "}
+            ? `${fmt(rate)}/night whole place, split ${familyCount} ways`
+            : `${fmt(rate)}/night per room`}{" "}
           → <span className="font-bold">{fmt(segCost)}</span> for {familyLabel}
         </p>
       </button>

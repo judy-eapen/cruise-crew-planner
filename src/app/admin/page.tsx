@@ -23,7 +23,7 @@ export default function AdminPage() {
   const [data, setData] = useState<TripData | null>(null);
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [newHotel, setNewHotel] = useState({ name: "", price: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
+  const [newHotel, setNewHotel] = useState({ name: "", pricePre: "", pricePost: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
   const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
 
   const call = useCallback(
@@ -324,7 +324,7 @@ export default function AdminPage() {
         <section className={cardCls}>
           <h2 className="font-bold text-white">Hotels & Airbnbs</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Price is per night: per room (hotels) or for the whole property split evenly across the{" "}
+            Two nightly rates per property — the before-cruise window (Oct 31–Nov 2) and the after-cruise window (Nov 6+) price differently. Each rate is per room (hotels) or for the whole property split evenly across the{" "}
             {data?.families.length ?? 7} families (Airbnb mode).
           </p>
           <div className="mt-3 space-y-2">
@@ -333,8 +333,10 @@ export default function AdminPage() {
               return (
                 <div key={h.id} className="flex flex-wrap items-center gap-2 text-sm">
                   <input className={`${txtCls} min-w-56 flex-1`} value={draft(k("name"), h.name)} onChange={(e) => setDraft(k("name"), e.target.value)} />
-                  <span className="text-xs text-slate-500">$</span>
-                  <input className={numCls} value={draft(k("price"), h.price)} onChange={(e) => setDraft(k("price"), e.target.value)} />
+                  <span className="text-xs text-slate-500">before $</span>
+                  <input className={numCls} value={draft(k("ppre"), h.pricePre)} onChange={(e) => setDraft(k("ppre"), e.target.value)} />
+                  <span className="text-xs text-slate-500">after $</span>
+                  <input className={numCls} value={draft(k("ppost"), h.pricePost)} onChange={(e) => setDraft(k("ppost"), e.target.value)} />
                   <select className={selCls} value={draft(k("mode"), h.priceMode)} onChange={(e) => setDraft(k("mode"), e.target.value)}>
                     <option value="per_room_night">/night per room</option>
                     <option value="per_property_night_split">/night whole place (split)</option>
@@ -367,7 +369,8 @@ export default function AdminPage() {
                           payload: {
                             id: h.id,
                             name: draft(k("name"), h.name),
-                            price: Number(draft(k("price"), h.price)),
+                            pricePre: Number(draft(k("ppre"), h.pricePre)),
+                            pricePost: Number(draft(k("ppost"), h.pricePost)),
                             priceMode: draft(k("mode"), h.priceMode),
                             stars: Number(draft(k("stars"), h.stars)),
                             area: draft(k("area"), h.area),
@@ -392,8 +395,10 @@ export default function AdminPage() {
             })}
             <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-3 text-sm">
               <input placeholder="New hotel / Airbnb name" className={`${txtCls} min-w-56 flex-1`} value={newHotel.name} onChange={(e) => setNewHotel({ ...newHotel, name: e.target.value })} />
-              <span className="text-xs text-slate-500">$</span>
-              <input placeholder="price" className={numCls} value={newHotel.price} onChange={(e) => setNewHotel({ ...newHotel, price: e.target.value })} />
+              <span className="text-xs text-slate-500">before $</span>
+              <input placeholder="rate" className={numCls} value={newHotel.pricePre} onChange={(e) => setNewHotel({ ...newHotel, pricePre: e.target.value })} />
+              <span className="text-xs text-slate-500">after $</span>
+              <input placeholder="rate" className={numCls} value={newHotel.pricePost} onChange={(e) => setNewHotel({ ...newHotel, pricePost: e.target.value })} />
               <select className={selCls} value={newHotel.mode} onChange={(e) => setNewHotel({ ...newHotel, mode: e.target.value })}>
                 <option value="per_room_night">/night per room</option>
                 <option value="per_property_night_split">/night whole place (split)</option>
@@ -405,13 +410,14 @@ export default function AdminPage() {
               <input placeholder="area" className={`${txtCls} w-40`} value={newHotel.area} onChange={(e) => setNewHotel({ ...newHotel, area: e.target.value })} />
               <button
                 onClick={() => {
-                  if (!newHotel.name || !newHotel.price) return;
+                  if (!newHotel.name || !newHotel.pricePre) return;
                   run(
                     {
                       action: "upsert-hotel",
                       payload: {
                         name: newHotel.name,
-                        price: Number(newHotel.price),
+                        pricePre: Number(newHotel.pricePre),
+                        pricePost: Number(newHotel.pricePost || newHotel.pricePre),
                         priceMode: newHotel.mode,
                         stars: Number(newHotel.stars),
                         area: newHotel.area,
@@ -423,7 +429,7 @@ export default function AdminPage() {
                     },
                     "Added ✓"
                   );
-                  setNewHotel({ name: "", price: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
+                  setNewHotel({ name: "", pricePre: "", pricePost: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
                 }}
                 className={btnCls}
               >

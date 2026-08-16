@@ -33,7 +33,8 @@ create table if not exists flights (
 create table if not exists hotels (
   id text primary key,
   name text not null,
-  price numeric not null,
+  price_pre numeric not null,
+  price_post numeric not null,
   price_mode text not null default 'per_room_night' check (price_mode in ('per_room_night', 'per_property_night_split')),
   stars int not null default 3,
   area text not null default '',

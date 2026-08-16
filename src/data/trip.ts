@@ -60,9 +60,9 @@ const FLIGHTS: FlightQuote[] = DATE_OPTIONS.flatMap((o) =>
 );
 
 const HOTELS: Hotel[] = [
-  { id: "H1", name: "Drury Inn Lake Buena Vista", price: 145, priceMode: "per_room_night", stars: 3, area: "Lake Buena Vista (near Disney)", type: "hotel", pool: true, breakfastIncluded: true, amenities: "Free hot breakfast + evening snacks", estimate: true },
-  { id: "H2", name: "Residence Inn Flamingo Crossings (suites)", price: 185, priceMode: "per_room_night", stars: 3, area: "Flamingo Crossings (near Disney)", type: "hotel", pool: true, breakfastIncluded: true, amenities: "Suites sleep 5–6, kitchenettes", estimate: true },
-  { id: "H3", name: "Disney Pop Century (on-property)", price: 260, priceMode: "per_room_night", stars: 3, area: "Disney property", type: "hotel", pool: true, breakfastIncluded: false, amenities: "Early park entry", estimate: true },
+  { id: "H1", name: "Drury Inn Lake Buena Vista", pricePre: 145, pricePost: 145, priceMode: "per_room_night", stars: 3, area: "Lake Buena Vista (near Disney)", type: "hotel", pool: true, breakfastIncluded: true, amenities: "Free hot breakfast + evening snacks", estimate: true },
+  { id: "H2", name: "Residence Inn Flamingo Crossings (suites)", pricePre: 185, pricePost: 185, priceMode: "per_room_night", stars: 3, area: "Flamingo Crossings (near Disney)", type: "hotel", pool: true, breakfastIncluded: true, amenities: "Suites sleep 5–6, kitchenettes", estimate: true },
+  { id: "H3", name: "Disney Pop Century (on-property)", pricePre: 260, pricePost: 260, priceMode: "per_room_night", stars: 3, area: "Disney property", type: "hotel", pool: true, breakfastIncluded: false, amenities: "Early park entry", estimate: true },
 ];
 
 const ACTIVITIES: Activity[] = [

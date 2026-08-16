@@ -33,7 +33,8 @@ export type HotelPriceMode = "per_room_night" | "per_property_night_split";
 export interface Hotel {
   id: string;
   name: string;
-  price: number; // per night — per room, or for the whole property (split across families)
+  pricePre: number; // nightly rate for the before-cruise window (Oct 31 – Nov 2)
+  pricePost: number; // nightly rate for the after-cruise window (Nov 6 – return)
   priceMode: HotelPriceMode;
   stars: number;
   area: string; // e.g. "Lake Buena Vista", "Cocoa Beach / near port"
