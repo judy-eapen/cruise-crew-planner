@@ -46,6 +46,7 @@ export interface Hotel {
   pool: boolean;
   breakfastIncluded: boolean;
   amenities: string;
+  link: string; // booking-site URL — families can click through for photos/details
   estimate: boolean;
 }
 

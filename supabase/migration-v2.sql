@@ -37,6 +37,7 @@ create table hotels (
   pool boolean not null default false,
   breakfast_included boolean not null default false,
   amenities text not null default '',
+  link text not null default '',
   estimate boolean not null default true
 );
 alter table hotels enable row level security;

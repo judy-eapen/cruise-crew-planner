@@ -23,7 +23,7 @@ export default function AdminPage() {
   const [data, setData] = useState<TripData | null>(null);
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
+  const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "" });
   const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
 
   const call = useCallback(
@@ -370,6 +370,7 @@ export default function AdminPage() {
                     🍳
                     <input type="checkbox" checked={draft(k("bkf"), h.breakfastIncluded ? "1" : "") === "1" || (drafts[k("bkf")] === undefined && h.breakfastIncluded)} onChange={(e) => setDraft(k("bkf"), e.target.checked ? "1" : "")} />
                   </label>
+                  <input className={`${txtCls} w-44`} placeholder="🔗 booking link (https://…)" value={draft(k("link"), h.link)} onChange={(e) => setDraft(k("link"), e.target.value)} />
                   <button
                     onClick={() =>
                       run(
@@ -389,6 +390,7 @@ export default function AdminPage() {
                             pool: draft(k("pool"), h.pool ? "1" : "") === "1",
                             breakfastIncluded: draft(k("bkf"), h.breakfastIncluded ? "1" : "") === "1",
                             amenities: h.amenities,
+                            link: draft(k("link"), h.link),
                           },
                         },
                         `Saved ${h.id} ✓`
@@ -428,6 +430,7 @@ export default function AdminPage() {
                 <option value="airbnb">🏡 airbnb</option>
               </select>
               <input placeholder="area" className={`${txtCls} w-40`} value={newHotel.area} onChange={(e) => setNewHotel({ ...newHotel, area: e.target.value })} />
+              <input placeholder="🔗 booking link" className={`${txtCls} w-44`} value={newHotel.link} onChange={(e) => setNewHotel({ ...newHotel, link: e.target.value })} />
               <button
                 onClick={() => {
                   if (!newHotel.name || !newHotel.sp2) return;
@@ -447,11 +450,12 @@ export default function AdminPage() {
                         pool: false,
                         breakfastIncluded: false,
                         amenities: "",
+                        link: newHotel.link,
                       },
                     },
                     "Added ✓"
                   );
-                  setNewHotel({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
+                  setNewHotel({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "" });
                 }}
                 className={btnCls}
               >

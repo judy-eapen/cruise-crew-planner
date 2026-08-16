@@ -124,6 +124,25 @@ export default function BuilderSection({
           {h.breakfastIncluded && " · 🍳 breakfast"}
         </p>
         {h.amenities && <p className="mt-0.5 text-xs text-slate-500">{h.amenities}</p>}
+        {h.link && (
+          <span
+            role="link"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(h.link, "_blank", "noopener");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.stopPropagation();
+                window.open(h.link, "_blank", "noopener");
+              }
+            }}
+            className="mt-1 inline-block text-xs font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
+          >
+            View hotel ↗
+          </span>
+        )}
         <p className="mt-1.5 text-sm text-amber-200">
           {h.estimate && "~"}
           {rateText}

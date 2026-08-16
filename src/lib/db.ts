@@ -65,6 +65,7 @@ const mapHotel = (r: any): Hotel => ({
   pool: r.pool ?? false,
   breakfastIncluded: r.breakfast_included ?? false,
   amenities: r.amenities ?? "",
+  link: r.link ?? "",
   estimate: r.estimate,
 });
 const mapActivity = (r: any): Activity => ({

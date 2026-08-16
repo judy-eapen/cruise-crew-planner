@@ -6,3 +6,4 @@ alter table hotels add column if not exists stay_pre2 numeric not null default 0
 alter table hotels add column if not exists stay_pre1 numeric not null default 0;  -- Nov 1 -> Nov 2
 alter table hotels add column if not exists stay_post2 numeric not null default 0; -- Nov 6 -> Nov 8
 alter table hotels add column if not exists stay_post1 numeric not null default 0; -- Nov 6 -> Nov 7
+alter table hotels add column if not exists link text not null default '';
