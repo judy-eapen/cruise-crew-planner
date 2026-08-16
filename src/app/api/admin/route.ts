@@ -142,7 +142,6 @@ export async function POST(req: Request) {
               kids_10plus: f.kids10plus,
               rooms: f.rooms,
               bags: f.bags,
-              preferred_airline: f.preferredAirline,
               placeholder: f.placeholder,
               token: newToken(),
             }))
@@ -287,7 +286,7 @@ export async function POST(req: Request) {
       }
 
       case "update-family": {
-        const { id, name, adults, kids39, kids10plus, rooms, bags, preferredAirline } = payload;
+        const { id, name, adults, kids39, kids10plus, rooms, bags } = payload;
         const { error } = await supabase
           .from("families")
           .update({
@@ -297,7 +296,6 @@ export async function POST(req: Request) {
             kids_10plus: Number(kids10plus),
             rooms: Number(rooms),
             bags: Number(bags ?? 2),
-            preferred_airline: String(preferredAirline ?? "").trim().slice(0, 40),
             placeholder: false,
           })
           .eq("id", id);

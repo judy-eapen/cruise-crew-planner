@@ -74,8 +74,7 @@ export default function Planner() {
     } catch {}
   };
 
-  const familyPref = familyId === "custom" ? "" : (data.families.find((f) => f.id === familyId)?.preferredAirline ?? "");
-  const effectiveBuild = (id: OptionId): Build => builds[id] ?? defaultBuild(data, id, familyPref);
+  const effectiveBuild = (id: OptionId): Build => builds[id] ?? defaultBuild(data, id);
   const updateBuild = (id: OptionId, b: Build) => persistBuilds({ ...builds, [id]: b });
   const resetBuild = (id: OptionId) => {
     const next = { ...builds };
@@ -92,8 +91,8 @@ export default function Planner() {
   const party: PartySize = familyId === "custom" || !selectedFamily ? custom : partyFromFamily(selectedFamily);
 
   const costs = useMemo(
-    () => data.dateOptions.map((o) => costForBuild(data, o.id, builds[o.id] ?? defaultBuild(data, o.id, familyPref), party)),
-    [data, builds, party, familyPref]
+    () => data.dateOptions.map((o) => costForBuild(data, o.id, builds[o.id] ?? defaultBuild(data, o.id), party)),
+    [data, builds, party]
   );
   const familyLabel = familyId === "custom" || !selectedFamily ? "Custom family" : selectedFamily.name;
   const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
