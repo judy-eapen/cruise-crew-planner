@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Activity, Build, Hotel, OptionId, TripData } from "@/lib/types";
 import {
   activityCostForParty,
@@ -59,10 +59,13 @@ export default function BuilderSection({
   // day is filled glide to the total. Tracks clicks this visit, per option.
   const [pickedSegs, setPickedSegs] = useState<("pre" | "post")[]>([]);
   const [touchedDays, setTouchedDays] = useState<string[]>([]);
-  useEffect(() => {
+  const [flowOption, setFlowOption] = useState(optionId);
+  if (flowOption !== optionId) {
+    // Reset the guided-flow progress when the option changes (state-during-render pattern).
+    setFlowOption(optionId);
     setPickedSegs([]);
     setTouchedDays([]);
-  }, [optionId]);
+  }
   const glideTo = (id: string) =>
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
 
