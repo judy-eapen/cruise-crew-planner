@@ -320,9 +320,10 @@ export default function Planner() {
       </div>
 
       {/* One long page — sections in narrative order */}
-      <main className="relative w-full space-y-16 px-5 pt-10 pb-16 lg:px-12">
-        <section id="flights" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">01 · Dates & flights</p>
+      {/* One long page — each section gets its own tinted band so scroll position is obvious */}
+      <main className="relative w-full pt-6 pb-16">
+        <section id="flights" className="scroll-mt-40 border-y border-white/5 bg-indigo-400/[0.07] px-5 py-12 lg:px-12">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-indigo-300">✈️ 01 · Dates & flights</p>
           <FlightsGlance
             data={data}
             party={party}
@@ -343,8 +344,8 @@ export default function Planner() {
           />
         </section>
 
-        <section id="build" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">02 · Hotels, activities & your total</p>
+        <section id="build" className="scroll-mt-40 px-5 py-12 lg:px-12">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-amber-300">🏨 02 · Hotels, activities & your total</p>
           <h2 className="font-display mb-1 text-2xl tracking-wide text-white">
             Make Option {selectedOption} yours
           </h2>
@@ -365,8 +366,8 @@ export default function Planner() {
           />
         </section>
 
-        <section id="group" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">03 · Compare your picks</p>
+        <section id="group" className="scroll-mt-40 border-y border-white/5 bg-fuchsia-500/[0.07] px-5 py-12 lg:px-12">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300">⚖️ 03 · Compare your picks</p>
           <PicksCompare
             data={data}
             party={party}
@@ -390,12 +391,12 @@ export default function Planner() {
           </details>
         </section>
 
-        <section id="vote" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">04 · Decide</p>
+        <section id="vote" className="scroll-mt-40 bg-cyan-400/[0.06] px-5 py-12 lg:px-12">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">🗳 04 · Decide</p>
           <VoteTab data={data} />
         </section>
 
-        <p className="border-t border-white/10 pt-4 text-xs text-slate-400">
+        <p className="border-t border-white/10 px-5 pt-4 text-xs text-slate-400 lg:px-12">
           Prices checked {priceChecked} · ~ marks estimated prices pending confirmation · park child pricing =
           ages 3–9; kids 10+ pay adult prices; all kids pay adult airfare · checked bags assumed $50 each
           (round trip) unless a flight quote says otherwise · only nonstop flights were searched · the crew table applies your picks (or the
