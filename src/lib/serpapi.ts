@@ -159,10 +159,19 @@ export async function fetchQuotesForOption(
           finalists.push({ origin, itin: itins[0] });
           break;
         }
-      } catch {
+      } catch (e) {
         searches++;
+        warnings.push(`Delta search ${origin}: ${e instanceof Error ? e.message : "failed"}`);
       }
     }
+  }
+  // Make a missing Delta pin explainable instead of silent.
+  if (!finalists.some(isDeltaItin)) {
+    warnings.push(
+      deltaAllowed
+        ? "Delta pin: no Delta itinerary found within these filters (dedicated DL search included)"
+        : "Delta pin skipped: airline filter excludes DL"
+    );
   }
 
   // Resolve return-leg times (and the true round-trip total) via departure_token.
