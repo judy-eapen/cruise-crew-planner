@@ -1,7 +1,7 @@
 "use client";
 
 import type { Build, OptionId, TripData } from "@/lib/types";
-import { fmt, quoteCostForParty, quotesForOption, type PartySize } from "@/lib/pricing";
+import { fmt, quoteCostForParty, quotesForOption, totalPeople, type PartySize } from "@/lib/pricing";
 import { isoRange, shortDay } from "@/lib/dates";
 
 const CRUISE_DAYS = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"];
@@ -64,7 +64,13 @@ export default function FlightsGlance({
     <div>
       <h3 className="font-display text-xl tracking-wide text-white">✈️ Flights at a glance — all six options</h3>
       <p className="text-xs text-slate-400">
-        Tap an option to make it your pick · tap a flight to choose it · prices are what {familyLabel} would pay · 💰 = cheapest for that option
+        Tap an option to make it your pick · tap a flight to choose it · 💰 = cheapest for that option
+      </p>
+      <p className="text-xs text-slate-400">
+        Prices are what <span className="font-semibold text-amber-200">{familyLabel}</span> would pay:{" "}
+        {party.adults} adult{party.adults !== 1 ? "s" : ""} + {party.kids39 + party.kids10plus} kid
+        {party.kids39 + party.kids10plus !== 1 ? "s" : ""} ({totalPeople(party)} seats — kids pay adult airfare) +{" "}
+        {party.bags} checked bag{party.bags !== 1 ? "s" : ""}
       </p>
       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {data.dateOptions.map((o) => {
@@ -127,7 +133,15 @@ export default function FlightsGlance({
                       </span>
                       <span className="block text-[11px] text-slate-400">
                         out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive}
-                        {q.bagFee > 0 ? ` · +${fmt(q.bagFee)}/bag` : " · bags incl."}
+                      </span>
+                      <span className="block text-[11px] tabular-nums text-slate-500">
+                        {totalPeople(party)} × {q.estimate && "~"}{fmt(q.farePerPerson)}/person
+                        {q.bagFee > 0 && party.bags > 0
+                          ? ` + ${party.bags} bag${party.bags !== 1 ? "s" : ""} × ${fmt(q.bagFee)}`
+                          : q.bagFee === 0
+                            ? " · bags fly free"
+                            : ""}{" "}
+                        = {fmt(cost)}
                       </span>
                     </button>
                   );
