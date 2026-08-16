@@ -4,14 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { SEED } from "@/data/trip";
 import type { Build, OptionId, TripData } from "@/lib/types";
 import { costForBuild, defaultBuild, partyFromFamily, type PartySize } from "@/lib/pricing";
-import CompareTab from "./CompareTab";
 import FlightsGlance from "./FlightsGlance";
 import BuilderSection from "./BuilderSection";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
 
 const SECTIONS = [
-  { id: "compare", label: "Compare" },
+  { id: "flights", label: "Flights" },
   { id: "build", label: "Build" },
   { id: "group", label: "Group" },
   { id: "vote", label: "Vote" },
@@ -22,7 +21,7 @@ const BUILDS_KEY = "ccp-builds-v2";
 export default function Planner() {
   // Render instantly on bundled seed data; swap in DB data when it arrives.
   const [data, setData] = useState<TripData>(SEED);
-  const [active, setActive] = useState<string>("compare");
+  const [active, setActive] = useState<string>("flights");
   const [familyId, setFamilyId] = useState(SEED.families[0].id);
   const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2 });
   const [showGuide, setShowGuide] = useState(false);
@@ -82,18 +81,9 @@ export default function Planner() {
     persistBuilds(next);
   };
 
-  const goToBuilder = (id: OptionId) => {
-    setSelectedOption(id);
-    document.getElementById("build")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const selectedFamily = data.families.find((f) => f.id === familyId);
   const party: PartySize = familyId === "custom" || !selectedFamily ? custom : partyFromFamily(selectedFamily);
 
-  const costs = useMemo(
-    () => data.dateOptions.map((o) => costForBuild(data, o.id, builds[o.id] ?? defaultBuild(data, o.id), party)),
-    [data, builds, party]
-  );
   const familyLabel = familyId === "custom" || !selectedFamily ? "Custom family" : selectedFamily.name;
   const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
   const hasEstimates =
@@ -208,7 +198,7 @@ export default function Planner() {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
             The cruise is booked — Mon <span className="font-semibold text-white">Nov 2</span> (board PM) to Fri{" "}
             <span className="font-semibold text-white">Nov 6</span> (off 9am). Six ways to wrap the magic around
-            it. Compare them, build your version, and vote.
+            it. Pick your flight, build your plan, see your total — then vote.
           </p>
           <p className="mt-3 text-xs font-bold uppercase tracking-[0.35em] text-amber-300/80">
             14 adults · 14 kids · one castle to storm
@@ -225,7 +215,7 @@ export default function Planner() {
               <span className="font-bold text-amber-300">①</span> Pick <em>your</em> family below
             </span>
             <span>
-              <span className="font-bold text-amber-300">②</span> Compare the 6 options — tap one to build it your way
+              <span className="font-bold text-amber-300">②</span> Pick your dates & flight, then hotels and activities
             </span>
             <span>
               <span className="font-bold text-amber-300">③</span> Vote using your family&apos;s private link
@@ -297,24 +287,21 @@ export default function Planner() {
 
       {/* One long page — sections in narrative order */}
       <main className="relative w-full space-y-16 px-5 pt-10 pb-16 lg:px-12">
-        <section id="compare" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">01 · The options</p>
-          <CompareTab costs={costs} familyLabel={familyLabel} onSelectOption={goToBuilder} />
+        <section id="flights" className="scroll-mt-40">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">01 · Dates & flights</p>
+          <FlightsGlance
+            data={data}
+            party={party}
+            familyLabel={familyLabel}
+            selectedOption={selectedOption}
+            buildFor={effectiveBuild}
+            onPickQuote={(id, quoteId) => updateBuild(id, { ...effectiveBuild(id), flightId: quoteId })}
+            onSelectOption={setSelectedOption}
+          />
         </section>
 
         <section id="build" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">02 · Build your trip</p>
-          <div className="mb-8">
-            <FlightsGlance
-              data={data}
-              party={party}
-              familyLabel={familyLabel}
-              selectedOption={selectedOption}
-              buildFor={effectiveBuild}
-              onPickQuote={(id, quoteId) => updateBuild(id, { ...effectiveBuild(id), flightId: quoteId })}
-              onSelectOption={setSelectedOption}
-            />
-          </div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">02 · Hotels, activities & your total</p>
           <h2 className="font-display mb-1 text-2xl tracking-wide text-white">
             Make Option {selectedOption} yours
           </h2>
