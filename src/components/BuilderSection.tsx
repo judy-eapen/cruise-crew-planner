@@ -134,6 +134,7 @@ export default function BuilderSection({
             )}
           </p>
         )}
+        {h.cancellation && <p className="mt-0.5 text-xs text-emerald-300">↩ {h.cancellation}</p>}
         {h.amenities && <p className="mt-0.5 text-xs text-slate-500">{h.amenities}</p>}
         {h.link && (
           <span

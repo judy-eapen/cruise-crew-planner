@@ -12,3 +12,4 @@ alter table hotels add column if not exists bedrooms int not null default 0;
 alter table hotels add column if not exists beds int not null default 0;
 alter table hotels add column if not exists baths numeric not null default 0;
 alter table hotels add column if not exists sleeps int not null default 0;
+alter table hotels add column if not exists cancellation text not null default '';

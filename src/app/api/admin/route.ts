@@ -94,6 +94,7 @@ export async function POST(req: Request) {
               beds: h.beds,
               baths: h.baths,
               sleeps: h.sleeps,
+              cancellation: h.cancellation,
               estimate: h.estimate,
             }))
           )
@@ -224,7 +225,7 @@ export async function POST(req: Request) {
       }
 
       case "upsert-hotel": {
-        const { id, name, stayPre2, stayPre1, stayPost2, stayPost1, priceMode, stars, area, type, pool, breakfastIncluded, amenities, link, sharedFamilies, bedrooms, beds, baths, sleeps } = payload;
+        const { id, name, stayPre2, stayPre1, stayPost2, stayPost1, priceMode, stars, area, type, pool, breakfastIncluded, amenities, link, sharedFamilies, bedrooms, beds, baths, sleeps, cancellation } = payload;
         const hotelId = id || `H${Date.now().toString(36)}`;
         const { error } = await supabase.from("hotels").upsert({
           id: hotelId,
@@ -246,6 +247,7 @@ export async function POST(req: Request) {
           beds: Number(beds ?? 0),
           baths: Number(baths ?? 0),
           sleeps: Number(sleeps ?? 0),
+          cancellation: String(cancellation ?? "").slice(0, 120),
           estimate: false,
         });
         if (error) throw new Error(error.message);

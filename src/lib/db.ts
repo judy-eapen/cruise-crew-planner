@@ -71,6 +71,7 @@ const mapHotel = (r: any): Hotel => ({
   beds: r.beds ?? 0,
   baths: Number(r.baths ?? 0),
   sleeps: r.sleeps ?? 0,
+  cancellation: r.cancellation ?? "",
   estimate: r.estimate,
 });
 const mapActivity = (r: any): Activity => ({

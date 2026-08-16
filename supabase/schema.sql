@@ -50,6 +50,7 @@ create table if not exists hotels (
   beds int not null default 0,
   baths numeric not null default 0,
   sleeps int not null default 0,
+  cancellation text not null default '',
   estimate boolean not null default true
 );
 

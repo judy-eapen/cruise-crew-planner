@@ -408,6 +408,7 @@ export default function AdminPage() {
                     <input type="checkbox" checked={draft(k("bkf"), h.breakfastIncluded ? "1" : "") === "1" || (drafts[k("bkf")] === undefined && h.breakfastIncluded)} onChange={(e) => setDraft(k("bkf"), e.target.checked ? "1" : "")} />
                   </label>
                   <input className={`${txtCls} w-44`} placeholder="🔗 booking link (https://…)" value={draft(k("link"), h.link)} onChange={(e) => setDraft(k("link"), e.target.value)} />
+                  <input className={`${txtCls} w-44`} placeholder="↩ cancellation (e.g. free before Oct 26)" value={draft(k("cxl"), h.cancellation)} onChange={(e) => setDraft(k("cxl"), e.target.value)} />
                   {draft(k("type"), h.type) === "airbnb" &&
                     (
                       [
@@ -443,6 +444,7 @@ export default function AdminPage() {
                             amenities: h.amenities,
                             link: draft(k("link"), h.link),
                             sharedFamilies: Number(draft(k("shf"), h.sharedFamilies)),
+                            cancellation: draft(k("cxl"), h.cancellation),
                             bedrooms: Number(draft(k("hbr"), h.bedrooms)),
                             beds: Number(draft(k("hbd"), h.beds)),
                             baths: Number(draft(k("hba"), h.baths)),

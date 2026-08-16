@@ -52,6 +52,7 @@ export interface Hotel {
   beds: number;
   baths: number;
   sleeps: number; // max occupancy
+  cancellation: string; // e.g. "Free cancellation before Oct 26"
   estimate: boolean;
 }
 
