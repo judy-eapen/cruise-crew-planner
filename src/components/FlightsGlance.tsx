@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Build, OptionId, TripData } from "@/lib/types";
 import { fmt, quoteCostForParty, quotesForOption, totalPeople, type PartySize } from "@/lib/pricing";
 import { isoRange, shortDay } from "@/lib/dates";
@@ -60,6 +61,7 @@ export default function FlightsGlance({
   onPickQuote: (optionId: OptionId, quoteId: number) => void;
   onSelectOption: (id: OptionId) => void;
 }) {
+  const [mathFor, setMathFor] = useState<number | null>(null);
   return (
     <div>
       <h3 className="font-display text-xl tracking-wide text-white">✈️ Flights at a glance — all six options</h3>
@@ -125,7 +127,24 @@ export default function FlightsGlance({
                           {q.airline} · {q.origin}
                           {isChosen && " ✓"}
                         </span>
-                        <span className={`text-sm font-bold tabular-nums ${isCheapest ? "text-emerald-300" : "text-slate-200"}`}>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          title="Tap for the math"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMathFor(mathFor === q.id ? null : q.id);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.stopPropagation();
+                              setMathFor(mathFor === q.id ? null : q.id);
+                            }
+                          }}
+                          className={`text-sm font-bold tabular-nums underline decoration-dotted underline-offset-4 ${
+                            isCheapest ? "text-emerald-300 decoration-emerald-300/50" : "text-slate-200 decoration-slate-500"
+                          }`}
+                        >
                           {isCheapest && "💰 "}
                           {q.estimate && "~"}
                           {fmt(cost)}
@@ -134,15 +153,15 @@ export default function FlightsGlance({
                       <span className="block text-[11px] text-slate-400">
                         out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive}
                       </span>
-                      <span className="block text-[11px] tabular-nums text-slate-500">
-                        {totalPeople(party)} × {q.estimate && "~"}{fmt(q.farePerPerson)}/person
-                        {q.bagFee > 0 && party.bags > 0
-                          ? ` + ${party.bags} bag${party.bags !== 1 ? "s" : ""} × ${fmt(q.bagFee)}`
-                          : q.bagFee === 0
-                            ? " · bags fly free"
-                            : ""}{" "}
-                        = {fmt(cost)}
-                      </span>
+                      {mathFor === q.id && (
+                        <span className="mt-1 block rounded-lg bg-white/5 px-2 py-1 text-[11px] tabular-nums text-amber-100">
+                          {totalPeople(party)} people × {q.estimate && "~"}{fmt(q.farePerPerson)}/person
+                          {q.bagFee > 0 && party.bags > 0
+                            ? ` + ${party.bags} bag${party.bags !== 1 ? "s" : ""} × ${fmt(q.bagFee)}/bag`
+                            : " · bags fly free"}{" "}
+                          = <span className="font-bold">{fmt(cost)}</span>
+                        </span>
+                      )}
                     </button>
                   );
                 })}
