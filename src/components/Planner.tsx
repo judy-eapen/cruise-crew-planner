@@ -26,6 +26,8 @@ export default function Planner() {
   const [active, setActive] = useState<string>("flights");
   const [familyId, setFamilyId] = useState(SEED.families[0].id);
   const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2 });
+  // What-if override for the selected family (e.g. try 4 bags) — local only, never saved.
+  const [tweak, setTweak] = useState<PartySize | null>(null);
   const [showGuide, setShowGuide] = useState(false);
   const [selectedOption, setSelectedOption] = useState<OptionId>("A");
   const [hasSelection, setHasSelection] = useState(false);
@@ -85,9 +87,12 @@ export default function Planner() {
   };
 
   const selectedFamily = data.families.find((f) => f.id === familyId);
-  const party: PartySize = familyId === "custom" || !selectedFamily ? custom : partyFromFamily(selectedFamily);
+  const savedParty = selectedFamily ? partyFromFamily(selectedFamily) : null;
+  const isTweaked = Boolean(tweak && savedParty && JSON.stringify(tweak) !== JSON.stringify(savedParty));
+  const party: PartySize = familyId === "custom" || !selectedFamily ? custom : (tweak ?? savedParty!);
 
-  const familyLabel = familyId === "custom" || !selectedFamily ? "Custom family" : selectedFamily.name;
+  const familyLabel =
+    familyId === "custom" || !selectedFamily ? "Custom family" : `${selectedFamily.name}${isTweaked ? " (adjusted)" : ""}`;
   const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
   const hasEstimates =
     data.flights.some((f) => f.estimate) ||
@@ -240,7 +245,10 @@ export default function Planner() {
           <span className="pl-1 text-xs font-bold uppercase tracking-wide text-slate-400">You are:</span>
           <select
             value={familyId}
-            onChange={(e) => setFamilyId(e.target.value)}
+            onChange={(e) => {
+              setFamilyId(e.target.value);
+              setTweak(null);
+            }}
             className="rounded-full border border-amber-300/50 bg-white/5 px-3.5 py-1.5 text-sm font-bold text-amber-100 [&>option]:text-slate-900"
             aria-label="Family"
           >
@@ -251,7 +259,16 @@ export default function Planner() {
             ))}
             <option value="custom">✏️ Custom…</option>
           </select>
-          {familyId === "custom" && (
+          {familyId !== "custom" && selectedFamily && !tweak && (
+            <button
+              onClick={() => setTweak(savedParty)}
+              className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/20"
+              title="Try different numbers (bags, kids, rooms) without changing what's saved"
+            >
+              ⚙️ Adjust numbers
+            </button>
+          )}
+          {(familyId === "custom" || tweak) && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5">
               {(
                 [
@@ -268,12 +285,25 @@ export default function Planner() {
                     type="number"
                     min={0}
                     max={9}
-                    value={custom[key]}
-                    onChange={(e) => setCustom({ ...custom, [key]: Math.max(0, Number(e.target.value)) })}
+                    value={familyId === "custom" ? custom[key] : tweak![key]}
+                    onChange={(e) => {
+                      const v = Math.max(0, Number(e.target.value));
+                      if (familyId === "custom") setCustom({ ...custom, [key]: v });
+                      else setTweak({ ...tweak!, [key]: v });
+                    }}
                     className="w-12 rounded border border-white/20 bg-white/10 px-1 py-0.5 text-center text-white"
                   />
                 </label>
               ))}
+              {familyId !== "custom" && (
+                <button
+                  onClick={() => setTweak(null)}
+                  className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-pink-300 transition hover:bg-white/20"
+                  title="Back to this family's saved numbers"
+                >
+                  ↺ saved
+                </button>
+              )}
             </div>
           )}
           {hasEstimates && (
