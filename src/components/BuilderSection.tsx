@@ -190,7 +190,7 @@ export default function BuilderSection({
         {houses.length > 0 && (
           <>
             <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300/80">
-              🏡 Whole houses · one booking, cost split across families
+              🏡 Airbnb · one booking, cost split across families
             </p>
             <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {houses.map((h) => hotelCard(h, segment, nights, minCost))}
