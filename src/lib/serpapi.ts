@@ -123,8 +123,10 @@ export async function fetchQuotesForOption(
     return_date: returnDate,
     stops: filters.nonstopOnly ? "1" : "0", // SerpApi: 1 = nonstop only, 0 = any
   };
-  if (/^\d{1,2},\d{1,2}$/.test(filters.outboundTimes)) baseParams.outbound_times = filters.outboundTimes;
-  if (/^\d{1,2},\d{1,2}$/.test(filters.returnTimes)) baseParams.return_times = filters.returnTimes;
+  // "10,19" = depart 10:00-19:59 · "10,19,10,22" also caps arrival at 10:00-22:59
+  const TIME_WIN = /^\d{1,2},\d{1,2}(,\d{1,2},\d{1,2})?$/;
+  if (TIME_WIN.test(filters.outboundTimes)) baseParams.outbound_times = filters.outboundTimes;
+  if (TIME_WIN.test(filters.returnTimes)) baseParams.return_times = filters.returnTimes;
   const codes = sanitizeAirlineCodes(filters.includeAirlines);
   if (codes) baseParams.include_airlines = codes;
 

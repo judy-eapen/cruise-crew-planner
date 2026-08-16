@@ -252,8 +252,10 @@ export async function POST(req: Request) {
         // realistically leave before ~1 PM, so enforce a 13:00 floor.
         let retWin = String(returnTimes ?? "");
         if (opt.post_nights === 0) {
-          const [start, end] = /^\d{1,2},\d{1,2}$/.test(retWin) ? retWin.split(",").map(Number) : [13, 23];
-          retWin = `${Math.max(13, start)},${Math.max(14, end)}`;
+          const parts = /^\d{1,2},\d{1,2}(,\d{1,2},\d{1,2})?$/.test(retWin) ? retWin.split(",").map(Number) : [13, 23];
+          parts[0] = Math.max(13, parts[0]); // depart no earlier than 1 PM
+          parts[1] = Math.max(14, parts[1]);
+          retWin = parts.join(",");
         }
 
         const result = await fetchQuotesForOption(opt.depart_date, opt.return_date, {
