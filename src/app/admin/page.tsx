@@ -154,9 +154,31 @@ export default function AdminPage() {
             Loads the bundled seed data into Supabase (safe to re-run; keeps family tokens, family edits, votes,
             and any flight quotes you&apos;ve entered).
           </p>
-          <button onClick={() => run({ action: "seed" }, "Seeded ✨")} className={`${btnCls} mt-3`}>
-            Seed database
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button onClick={() => run({ action: "seed" }, "Seeded ✨")} className={btnCls}>
+              Seed database
+            </button>
+            <button
+              onClick={async () => {
+                setStatus("Exporting…");
+                try {
+                  const dump = await call({ action: "export" });
+                  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = `cruise-crew-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                  setStatus("Backup downloaded 💾 — do this before any database surgery");
+                } catch (e) {
+                  setStatus(`⚠ ${e instanceof Error ? e.message : "Export failed"}`);
+                }
+              }}
+              className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-cyan-300 hover:bg-white/20"
+            >
+              💾 Export backup (JSON)
+            </button>
+          </div>
         </section>
 
         {/* Vote links */}

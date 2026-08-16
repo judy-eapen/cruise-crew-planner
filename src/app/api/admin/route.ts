@@ -145,6 +145,17 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, seeded: true, familiesAdded: missing.length });
       }
 
+      case "export": {
+        const tables = ["date_options", "flights", "hotels", "activities", "itinerary_slots", "families", "votes"];
+        const dump: Record<string, unknown> = { exportedAt: new Date().toISOString() };
+        for (const t of tables) {
+          const { data, error } = await supabase.from(t).select("*");
+          if (error) throw new Error(`${t}: ${error.message}`);
+          dump[t] = data;
+        }
+        return NextResponse.json(dump);
+      }
+
       case "links": {
         const [fams, votes] = await Promise.all([
           supabase.from("families").select("id,name,token").order("id"),
