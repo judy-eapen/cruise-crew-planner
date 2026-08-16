@@ -77,8 +77,10 @@ export async function POST(req: Request) {
             SEED.hotels.map((h) => ({
               id: h.id,
               name: h.name,
-              price_pre: h.pricePre,
-              price_post: h.pricePost,
+              rate_oct31: h.rateOct31,
+              rate_nov1: h.rateNov1,
+              rate_nov6: h.rateNov6,
+              rate_nov7: h.rateNov7,
               price_mode: h.priceMode,
               stars: h.stars,
               area: h.area,
@@ -205,13 +207,15 @@ export async function POST(req: Request) {
       }
 
       case "upsert-hotel": {
-        const { id, name, pricePre, pricePost, priceMode, stars, area, type, pool, breakfastIncluded, amenities } = payload;
+        const { id, name, rateOct31, rateNov1, rateNov6, rateNov7, priceMode, stars, area, type, pool, breakfastIncluded, amenities } = payload;
         const hotelId = id || `H${Date.now().toString(36)}`;
         const { error } = await supabase.from("hotels").upsert({
           id: hotelId,
           name: String(name).slice(0, 120),
-          price_pre: Number(pricePre),
-          price_post: Number(pricePost ?? pricePre),
+          rate_oct31: Number(rateOct31),
+          rate_nov1: Number(rateNov1 ?? rateOct31),
+          rate_nov6: Number(rateNov6 ?? rateOct31),
+          rate_nov7: Number(rateNov7 ?? rateOct31),
           price_mode: priceMode === "per_property_night_split" ? "per_property_night_split" : "per_room_night",
           stars: Math.min(5, Math.max(1, Number(stars ?? 3))),
           area: String(area ?? "").slice(0, 80),

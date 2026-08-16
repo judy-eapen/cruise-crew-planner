@@ -33,8 +33,11 @@ export type HotelPriceMode = "per_room_night" | "per_property_night_split";
 export interface Hotel {
   id: string;
   name: string;
-  pricePre: number; // nightly rate for the before-cruise window (Oct 31 – Nov 2)
-  pricePost: number; // nightly rate for the after-cruise window (Nov 6 – return)
+  // The four nights any option can use — each priced individually.
+  rateOct31: number; // Sat, Halloween
+  rateNov1: number; // Sun
+  rateNov6: number; // Fri
+  rateNov7: number; // Sat
   priceMode: HotelPriceMode;
   stars: number;
   area: string; // e.g. "Lake Buena Vista", "Cocoa Beach / near port"

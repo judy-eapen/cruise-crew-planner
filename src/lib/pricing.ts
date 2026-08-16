@@ -48,7 +48,26 @@ export function quoteCostForParty(q: FlightQuote, party: PartySize): number {
   return q.farePerPerson * totalPeople(party) + q.bagFee * party.bags;
 }
 
-/** Cost of a hotel segment (pre- or post-cruise) for a party — rates differ by window. */
+/** The specific nightly rates a segment uses (pre: Oct 31/Nov 1; post: Nov 6/Nov 7). */
+export function segmentNightRates(hotel: Hotel, segment: "pre" | "post", nights: number): { label: string; rate: number }[] {
+  if (nights <= 0) return [];
+  if (segment === "pre") {
+    return nights >= 2
+      ? [
+          { label: "Oct 31", rate: hotel.rateOct31 },
+          { label: "Nov 1", rate: hotel.rateNov1 },
+        ]
+      : [{ label: "Nov 1", rate: hotel.rateNov1 }];
+  }
+  return nights >= 2
+    ? [
+        { label: "Nov 6", rate: hotel.rateNov6 },
+        { label: "Nov 7", rate: hotel.rateNov7 },
+      ]
+    : [{ label: "Nov 6", rate: hotel.rateNov6 }];
+}
+
+/** Cost of a hotel segment for a party — priced night by night. */
 export function hotelSegmentCost(
   hotel: Hotel,
   segment: "pre" | "post",
@@ -56,12 +75,12 @@ export function hotelSegmentCost(
   party: PartySize,
   familyCount: number
 ): number {
-  if (nights <= 0) return 0;
-  const rate = segment === "pre" ? hotel.pricePre : hotel.pricePost;
+  const sum = segmentNightRates(hotel, segment, nights).reduce((t, n) => t + n.rate, 0);
+  if (sum <= 0) return 0;
   if (hotel.priceMode === "per_property_night_split") {
-    return Math.round((rate * nights) / Math.max(1, familyCount));
+    return Math.round(sum / Math.max(1, familyCount));
   }
-  return rate * nights * party.rooms;
+  return sum * party.rooms;
 }
 
 /** The organizer's suggested configuration: cheapest flight, first hotel, sample activities. */

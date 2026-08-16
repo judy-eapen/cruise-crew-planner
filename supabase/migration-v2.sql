@@ -26,8 +26,10 @@ drop table if exists hotels;
 create table hotels (
   id text primary key,
   name text not null,
-  price_pre numeric not null,
-  price_post numeric not null,
+  rate_oct31 numeric not null,
+  rate_nov1 numeric not null,
+  rate_nov6 numeric not null,
+  rate_nov7 numeric not null,
   price_mode text not null default 'per_room_night' check (price_mode in ('per_room_night', 'per_property_night_split')),
   stars int not null default 3,
   area text not null default '',

@@ -54,8 +54,10 @@ const mapQuote = (r: any): FlightQuote => ({
 const mapHotel = (r: any): Hotel => ({
   id: r.id,
   name: r.name,
-  pricePre: Number(r.price_pre ?? r.price ?? 0),
-  pricePost: Number(r.price_post ?? r.price ?? 0),
+  rateOct31: Number(r.rate_oct31 ?? r.price_pre ?? r.price ?? 0),
+  rateNov1: Number(r.rate_nov1 ?? r.price_pre ?? r.price ?? 0),
+  rateNov6: Number(r.rate_nov6 ?? r.price_post ?? r.price ?? 0),
+  rateNov7: Number(r.rate_nov7 ?? r.price_post ?? r.price ?? 0),
   priceMode: (r.price_mode ?? "per_room_night") as HotelPriceMode,
   stars: r.stars ?? 3,
   area: r.area ?? "",
