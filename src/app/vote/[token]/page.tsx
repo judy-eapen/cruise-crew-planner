@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { getSupabase, getTripData } from "@/lib/db";
 import VoteForm from "@/components/VoteForm";
+import FireworksBackdrop from "@/components/FireworksBackdrop";
 
 export const dynamic = "force-dynamic";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] px-5 py-10 text-slate-100">
-      <div className="mx-auto max-w-2xl">
+    <div className="relative min-h-screen bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] px-5 py-10 text-slate-100">
+      <FireworksBackdrop />
+      <div className="relative mx-auto max-w-2xl">
         <Link href="/" className="font-display text-xl tracking-wide">
           🏰 Cruise<span className="text-amber-300">Crew</span> ✨
         </Link>

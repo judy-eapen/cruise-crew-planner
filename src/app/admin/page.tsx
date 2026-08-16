@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { TripData } from "@/lib/types";
+import FireworksBackdrop from "@/components/FireworksBackdrop";
 
 interface VoteLink {
   id: string;
@@ -101,8 +102,9 @@ export default function AdminPage() {
 
   if (!unlocked) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] px-5 py-16 text-slate-100">
-        <div className="mx-auto max-w-sm rounded-3xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-md">
+      <div className="relative min-h-screen bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] px-5 py-16 text-slate-100">
+        <FireworksBackdrop />
+        <div className="relative mx-auto max-w-sm rounded-3xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-md">
           <p className="text-4xl">🔐</p>
           <h1 className="font-display mt-3 text-2xl tracking-wide">Admin</h1>
           <input
@@ -126,8 +128,9 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] px-5 py-10 text-slate-100 lg:px-12">
-      <div className="mx-auto max-w-5xl">
+    <div className="relative min-h-screen bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] px-5 py-10 text-slate-100 lg:px-12">
+      <FireworksBackdrop />
+      <div className="relative mx-auto max-w-5xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="font-display text-3xl tracking-wide">
             🔧 Trip <span className="text-amber-300">Admin</span>

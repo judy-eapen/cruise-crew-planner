@@ -5,6 +5,7 @@ import { SEED } from "@/data/trip";
 import type { Build, OptionId, TripData } from "@/lib/types";
 import { costForBuild, defaultBuild, partyFromFamily, type PartySize } from "@/lib/pricing";
 import FlightsGlance from "./FlightsGlance";
+import FireworksBackdrop from "./FireworksBackdrop";
 import BuilderSection from "./BuilderSection";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
@@ -107,6 +108,7 @@ export default function Planner() {
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-[linear-gradient(168deg,#0a0e2a_0%,#171247_35%,#2a1a68_68%,#3d2384_100%)] text-slate-100">
+      <FireworksBackdrop />
       {/* Pixie-dust glow blobs */}
       <div className="pointer-events-none absolute -top-32 right-[-8%] h-96 w-96 rounded-full bg-amber-300/15 blur-3xl" />
       <div className="pointer-events-none absolute top-[40%] left-[-8%] h-80 w-80 rounded-full bg-fuchsia-500/15 blur-3xl" />
