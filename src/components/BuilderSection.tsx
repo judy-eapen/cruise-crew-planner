@@ -332,6 +332,11 @@ export default function BuilderSection({
                   </option>
                 ))}
               </select>
+              {s.slotType === "half" && (
+                <p className="mt-1.5 text-[11px] text-slate-500">
+                  ⏱ Half-day options only — not enough hours for a full-day park on this day
+                </p>
+              )}
               {chosen && (
                 <p className="mt-1.5 text-xs text-slate-400">
                   {AGE_LABEL[chosen.ageFit]} · {AREA_LABEL[chosen.area]}
