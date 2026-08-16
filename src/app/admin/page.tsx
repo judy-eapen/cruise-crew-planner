@@ -401,19 +401,20 @@ export default function AdminPage() {
                     <input type="checkbox" checked={draft(k("bkf"), h.breakfastIncluded ? "1" : "") === "1" || (drafts[k("bkf")] === undefined && h.breakfastIncluded)} onChange={(e) => setDraft(k("bkf"), e.target.checked ? "1" : "")} />
                   </label>
                   <input className={`${txtCls} w-44`} placeholder="🔗 booking link (https://…)" value={draft(k("link"), h.link)} onChange={(e) => setDraft(k("link"), e.target.value)} />
-                  {(
-                    [
-                      ["BR", "hbr", h.bedrooms],
-                      ["beds", "hbd", h.beds],
-                      ["baths", "hba", h.baths],
-                      ["sleeps", "hsl", h.sleeps],
-                    ] as const
-                  ).map(([label, key, val]) => (
-                    <label key={key} className="flex items-center gap-1 text-xs text-slate-400">
-                      {label}
-                      <input className="w-10 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={draft(k(key), val)} onChange={(e) => setDraft(k(key), e.target.value)} />
-                    </label>
-                  ))}
+                  {draft(k("type"), h.type) === "airbnb" &&
+                    (
+                      [
+                        ["BR", "hbr", h.bedrooms],
+                        ["beds", "hbd", h.beds],
+                        ["baths", "hba", h.baths],
+                        ["sleeps", "hsl", h.sleeps],
+                      ] as const
+                    ).map(([label, key, val]) => (
+                      <label key={key} className="flex items-center gap-1 text-xs text-slate-400">
+                        {label}
+                        <input className="w-10 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={draft(k(key), val)} onChange={(e) => setDraft(k(key), e.target.value)} />
+                      </label>
+                    ))}
                   <button
                     onClick={() =>
                       run(
