@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { TripData } from "@/lib/types";
 import FireworksBackdrop from "@/components/FireworksBackdrop";
+import { googleFlightsUrl } from "@/lib/dates";
 
 interface VoteLink {
   id: string;
@@ -400,6 +401,15 @@ export default function AdminPage() {
                         <button onClick={() => run({ action: "delete-quote", payload: { id: f.id } }, "Quote removed")} className={delCls}>
                           ✕
                         </button>
+                        <a
+                          href={googleFlightsUrl(draft(k("or"), f.origin), o.departDate, o.returnDate)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Google Flights with these airports and dates"
+                          className="text-xs font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
+                        >
+                          book ↗
+                        </a>
                       </div>
                     );
                   })}

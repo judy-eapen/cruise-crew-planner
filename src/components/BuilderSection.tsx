@@ -11,7 +11,7 @@ import {
   segmentStay,
   type PartySize,
 } from "@/lib/pricing";
-import { isoRange, shortDate, shortDay } from "@/lib/dates";
+import { googleFlightsUrl, isoRange, shortDate, shortDay } from "@/lib/dates";
 
 const CRUISE_DAYS = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"];
 
@@ -286,7 +286,16 @@ export default function BuilderSection({
               {cost.quote.airline} · {cost.quote.origin} → MCO
             </span>{" "}
             · out {cost.quote.outDepart} → {cost.quote.outArrive} · back {cost.quote.retDepart} → {cost.quote.retArrive} ·{" "}
-            <span className="font-bold text-white">{fmt(cost.flights)}</span> for {familyLabel}
+            <span className="font-bold text-white">{fmt(cost.flights)}</span> for {familyLabel} ·{" "}
+            <a
+              href={googleFlightsUrl(cost.quote.origin, option.departDate, option.returnDate)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Opens Google Flights with these airports and dates — pick this flight there to book"
+              className="font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
+            >
+              Book ↗
+            </a>
           </>
         ) : (
           "none yet"

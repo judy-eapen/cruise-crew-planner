@@ -1,5 +1,11 @@
 // Date helpers — all math on ISO strings at UTC noon to dodge timezone drift.
 
+/** Google Flights pre-loaded with this round trip — the booking jump-off for any quote. */
+export function googleFlightsUrl(origin: string, departDate: string, returnDate: string): string {
+  const q = `Flights from ${origin} to MCO on ${departDate} through ${returnDate} nonstop`;
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+}
+
 export function isoRange(startIso: string, endIso: string): string[] {
   const out: string[] = [];
   const d = new Date(startIso + "T12:00:00Z");

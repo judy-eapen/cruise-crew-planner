@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Build, OptionId, TripData } from "@/lib/types";
 import { fmt, quoteCostForParty, quotesForOption, totalPeople, type PartySize } from "@/lib/pricing";
-import { isoRange, shortDay } from "@/lib/dates";
+import { googleFlightsUrl, isoRange, shortDay } from "@/lib/dates";
 
 const CRUISE_DAYS = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"];
 
@@ -170,7 +170,25 @@ export default function FlightsGlance({
                         </span>
                       </span>
                       <span className="block text-[11px] text-slate-400">
-                        out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive}
+                        out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive} ·{" "}
+                        <span
+                          role="link"
+                          tabIndex={0}
+                          title="Opens Google Flights with these airports and dates — pick this flight there to book"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(googleFlightsUrl(q.origin, o.departDate, o.returnDate), "_blank", "noopener");
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.stopPropagation();
+                              window.open(googleFlightsUrl(q.origin, o.departDate, o.returnDate), "_blank", "noopener");
+                            }
+                          }}
+                          className="font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
+                        >
+                          Book ↗
+                        </span>
                       </span>
                       {mathFor === q.id && (
                         <span className="mt-1 block rounded-lg bg-white/5 px-2 py-1 text-[11px] tabular-nums text-amber-100">
