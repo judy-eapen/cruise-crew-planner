@@ -34,6 +34,7 @@ export default function AdminPage() {
     airlines: "", // IATA codes "DL,WN" ("" = all)
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [fareStatus, setFareStatus] = useState("");
 
   const call = useCallback(
     async (body: AdminAction, code?: string) => {
@@ -105,7 +106,7 @@ export default function AdminPage() {
     let totalSearches = 0;
     const problems: string[] = [];
     for (const id of optionIds) {
-      setStatus(`↻ Option ${id}: searching Google Flights…${totalAdded ? ` (${totalAdded} quotes so far)` : ""}`);
+      setFareStatus(`↻ Option ${id}: searching Google Flights…${totalAdded ? ` (${totalAdded} quotes so far)` : ""}`);
       try {
         const r = await call({
           action: "refresh-fares",
@@ -126,8 +127,8 @@ export default function AdminPage() {
         problems.push(`${id}: ${e instanceof Error ? e.message : "failed"}`);
       }
     }
-    setStatus(
-      `✓ Fetched ${totalAdded} fresh quotes (${totalSearches} SerpApi searches used)` +
+    setFareStatus(
+      `${totalAdded ? "✓" : "⚠"} Fetched ${totalAdded} fresh quotes (${totalSearches} SerpApi searches used)` +
         (problems.length ? ` · ⚠ ${problems.join(" · ")}` : "")
     );
     setRefreshing(false);
@@ -295,6 +296,9 @@ export default function AdminPage() {
               assumed $50/each round trip on every airline · full refresh ≈ 40 of your 100 free monthly searches —
               per-option ↻ (~7 each) stretches the quota · ✍️ manual quotes are never touched
             </p>
+            {fareStatus && (
+              <p className="mt-1.5 rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-cyan-100">{fareStatus}</p>
+            )}
           </div>
           {data?.dateOptions.map((o) => (
             <div key={o.id} className="mt-4 border-t border-white/10 pt-3">
