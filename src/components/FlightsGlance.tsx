@@ -2,7 +2,46 @@
 
 import type { Build, OptionId, TripData } from "@/lib/types";
 import { fmt, quoteCostForParty, quotesForOption, type PartySize } from "@/lib/pricing";
-import { shortDate } from "@/lib/dates";
+import { isoRange, shortDay } from "@/lib/dates";
+
+const CRUISE_DAYS = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"];
+
+/** Miniature journey strip: plane on fly days, ship Nov 2–5, activity icons between. */
+function MiniDayStrip({ data, optionId }: { data: TripData; optionId: OptionId }) {
+  const option = data.dateOptions.find((o) => o.id === optionId)!;
+  const slots = data.slots.filter((s) => s.optionId === optionId);
+  const days = isoRange(option.departDate, option.returnDate);
+  const info = (iso: string): { type: string; icon: string } => {
+    if (iso === option.departDate || iso === option.returnDate) return { type: "travel", icon: "✈️" };
+    if (CRUISE_DAYS.includes(iso)) return { type: "cruise", icon: "🚢" };
+    const slot = slots.find((s) => s.date === iso);
+    if (slot?.slotType === "full") return { type: "full", icon: "🎢" };
+    if (slot?.slotType === "half") return { type: "half", icon: "🌤" };
+    return { type: "travel", icon: "✈️" };
+  };
+  const chip = (t: string) =>
+    t === "cruise"
+      ? "bg-gradient-to-b from-indigo-500 to-fuchsia-600 text-white"
+      : t === "travel"
+        ? "bg-white/10 text-slate-300"
+        : t === "full"
+          ? "bg-amber-300 text-indigo-950"
+          : "bg-amber-200/30 text-amber-100";
+  return (
+    <div className="mt-2 flex gap-1">
+      {days.map((iso) => {
+        const d = info(iso);
+        return (
+          <div key={iso} className={`flex min-w-0 flex-1 flex-col items-center rounded-lg px-0.5 py-1 ${chip(d.type)}`}>
+            <span className="text-[8px] font-bold uppercase leading-none opacity-75">{shortDay(iso)}</span>
+            <span className="text-[11px] font-extrabold leading-tight">{Number(iso.slice(8))}</span>
+            <span className="text-[10px] leading-none">{d.icon}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function FlightsGlance({
   data,
@@ -46,11 +85,14 @@ export default function FlightsGlance({
                 isActive ? "border-amber-300/60 bg-amber-300/5" : "border-white/10 bg-white/5"
               }`}
             >
-              <button onClick={() => onSelectOption(o.id)} className="flex w-full items-baseline justify-between text-left">
-                <span className={`text-lg font-bold ${isActive ? "text-amber-200" : "text-white"}`}>Option {o.id}</span>
-                <span className="text-xs text-slate-400">
-                  {shortDate(o.departDate)} → {shortDate(o.returnDate)} · {freeDays} free day{freeDays !== 1 ? "s" : ""}
+              <button onClick={() => onSelectOption(o.id)} className="w-full text-left">
+                <span className="flex items-baseline justify-between">
+                  <span className={`text-lg font-bold ${isActive ? "text-amber-200" : "text-white"}`}>Option {o.id}</span>
+                  <span className="text-xs text-slate-400">
+                    {freeDays} free day{freeDays !== 1 ? "s" : ""}
+                  </span>
                 </span>
+                <MiniDayStrip data={data} optionId={o.id} />
               </button>
               <div className="mt-2.5 space-y-1.5">
                 {quotes.map((q) => {
