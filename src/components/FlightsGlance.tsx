@@ -49,6 +49,7 @@ export default function FlightsGlance({
   party,
   familyLabel,
   selectedOption,
+  hasSelection,
   buildFor,
   onPickQuote,
   onSelectOption,
@@ -57,6 +58,7 @@ export default function FlightsGlance({
   party: PartySize;
   familyLabel: string;
   selectedOption: OptionId;
+  hasSelection: boolean;
   buildFor: (id: OptionId) => Build;
   onPickQuote: (optionId: OptionId, quoteId: number) => void;
   onSelectOption: (id: OptionId) => void;
@@ -83,7 +85,7 @@ export default function FlightsGlance({
           const build = buildFor(o.id);
           const chosenId = build.flightId ?? quotes[0]?.id ?? null;
           const freeDays = data.slots.filter((s) => s.optionId === o.id && s.slotType === "full").length;
-          const isActive = o.id === selectedOption;
+          const isActive = hasSelection && o.id === selectedOption;
           return (
             <div
               key={o.id}
@@ -91,7 +93,9 @@ export default function FlightsGlance({
               className={`rounded-3xl border p-4 backdrop-blur-md transition-all duration-300 ${
                 isActive
                   ? "border-amber-300/70 bg-amber-300/5 shadow-lg shadow-amber-900/20"
-                  : "cursor-pointer border-white/10 bg-white/5 opacity-35 grayscale hover:opacity-60"
+                  : hasSelection
+                    ? "cursor-pointer border-white/10 bg-white/5 opacity-35 grayscale hover:opacity-60"
+                    : "cursor-pointer border-white/10 bg-white/5 hover:border-white/30"
               }`}
             >
               <button onClick={() => onSelectOption(o.id)} className="w-full text-left">

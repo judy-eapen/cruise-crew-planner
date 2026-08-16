@@ -27,6 +27,7 @@ export default function Planner() {
   const [custom, setCustom] = useState<PartySize>({ adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2 });
   const [showGuide, setShowGuide] = useState(false);
   const [selectedOption, setSelectedOption] = useState<OptionId>("A");
+  const [hasSelection, setHasSelection] = useState(false);
   // Personal builds live in this browser only; the group table uses the suggested plan.
   const [builds, setBuilds] = useState<Partial<Record<OptionId, Build>>>({});
 
@@ -296,12 +297,17 @@ export default function Planner() {
             party={party}
             familyLabel={familyLabel}
             selectedOption={selectedOption}
+            hasSelection={hasSelection}
             buildFor={effectiveBuild}
             onPickQuote={(id, quoteId) => {
               setSelectedOption(id);
+              setHasSelection(true);
               updateBuild(id, { ...effectiveBuild(id), flightId: quoteId });
             }}
-            onSelectOption={setSelectedOption}
+            onSelectOption={(id) => {
+              setSelectedOption(id);
+              setHasSelection(true);
+            }}
           />
         </section>
 
