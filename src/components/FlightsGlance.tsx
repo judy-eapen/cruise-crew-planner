@@ -87,8 +87,11 @@ export default function FlightsGlance({
           return (
             <div
               key={o.id}
-              className={`rounded-3xl border p-4 backdrop-blur-md transition ${
-                isActive ? "border-amber-300/60 bg-amber-300/5" : "border-white/10 bg-white/5"
+              onClick={() => !isActive && onSelectOption(o.id)}
+              className={`rounded-3xl border p-4 backdrop-blur-md transition-all duration-300 ${
+                isActive
+                  ? "border-amber-300/70 bg-amber-300/5 shadow-lg shadow-amber-900/20"
+                  : "cursor-pointer border-white/10 bg-white/5 opacity-35 grayscale hover:opacity-60"
               }`}
             >
               <button onClick={() => onSelectOption(o.id)} className="w-full text-left">
@@ -113,7 +116,7 @@ export default function FlightsGlance({
                 {quotes.map((q) => {
                   const cost = quoteCostForParty(q, party);
                   const isCheapest = cost === cheapest;
-                  const isChosen = q.id === chosenId;
+                  const isChosen = q.id === chosenId && isActive;
                   return (
                     <button
                       key={q.id}

@@ -297,7 +297,10 @@ export default function Planner() {
             familyLabel={familyLabel}
             selectedOption={selectedOption}
             buildFor={effectiveBuild}
-            onPickQuote={(id, quoteId) => updateBuild(id, { ...effectiveBuild(id), flightId: quoteId })}
+            onPickQuote={(id, quoteId) => {
+              setSelectedOption(id);
+              updateBuild(id, { ...effectiveBuild(id), flightId: quoteId });
+            }}
             onSelectOption={setSelectedOption}
           />
         </section>
