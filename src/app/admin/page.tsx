@@ -614,6 +614,8 @@ export default function AdminPage() {
                     ~est
                   </label>
                   <input className={`${txtCls} w-44`} placeholder="🎟 ticket link (https://…)" value={draft(k("link"), a.ticketLink)} onChange={(e) => setDraft(k("link"), e.target.value)} />
+                  <input className={`${txtCls} w-56`} placeholder="👧 what kids 3–9 can do" value={draft(k("any"), a.ageNotesYounger)} onChange={(e) => setDraft(k("any"), e.target.value)} />
+                  <input className={`${txtCls} w-56`} placeholder="🧑 what kids 10+ can do" value={draft(k("ano"), a.ageNotesOlder)} onChange={(e) => setDraft(k("ano"), e.target.value)} />
                   <button
                     onClick={() =>
                       run(
@@ -628,6 +630,8 @@ export default function AdminPage() {
                             star: draft(k("star"), String(a.star)) === "true",
                             estimate: draft(k("est"), String(a.estimate)) === "true",
                             ticketLink: draft(k("link"), a.ticketLink),
+                            ageNotesYounger: draft(k("any"), a.ageNotesYounger),
+                            ageNotesOlder: draft(k("ano"), a.ageNotesOlder),
                             datePrices: datePricesPayload(),
                           },
                         },

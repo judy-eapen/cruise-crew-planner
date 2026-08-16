@@ -87,6 +87,8 @@ const mapActivity = (r: any): Activity => ({
   estimate: r.estimate,
   note: r.note ?? undefined,
   ticketLink: r.ticket_link ?? "",
+  ageNotesYounger: r.age_notes_younger ?? "",
+  ageNotesOlder: r.age_notes_older ?? "",
   datePrices: r.date_prices && typeof r.date_prices === "object" ? r.date_prices : undefined,
 });
 const mapSlot = (r: any): ItinerarySlot => ({

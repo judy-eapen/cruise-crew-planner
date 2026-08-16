@@ -71,6 +71,8 @@ export interface Activity {
   estimate: boolean;
   note?: string;
   ticketLink: string; // official ticket-purchase page URL ("" = none)
+  ageNotesYounger: string; // what kids 3-9 can do here ("" = none written)
+  ageNotesOlder: string; // what kids 10+ can do here
   /** Optional per-date prices (Disney-style calendar pricing). Key = ISO date; falls back to adultPrice/childPrice. */
   datePrices?: Record<string, { adult: number; child: number }>;
 }

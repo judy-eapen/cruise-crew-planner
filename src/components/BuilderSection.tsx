@@ -372,6 +372,20 @@ export default function BuilderSection({
                   ⏱ Half-day options only — not enough hours for a full-day park on this day
                 </p>
               )}
+              {chosen && (chosen.ageNotesYounger || chosen.ageNotesOlder) && (
+                <span className="mt-1.5 block rounded-lg bg-white/5 px-2.5 py-1.5 text-xs">
+                  {chosen.ageNotesYounger && (
+                    <span className="block text-slate-300">
+                      <span className="font-semibold text-amber-200">👧 3–9:</span> {chosen.ageNotesYounger}
+                    </span>
+                  )}
+                  {chosen.ageNotesOlder && (
+                    <span className="block text-slate-300">
+                      <span className="font-semibold text-amber-200">🧑 10+:</span> {chosen.ageNotesOlder}
+                    </span>
+                  )}
+                </span>
+              )}
               {chosen && (
                 <p className="mt-1.5 text-xs text-slate-400">
                   {AGE_LABEL[chosen.ageFit]} · {AREA_LABEL[chosen.area]}
@@ -464,6 +478,16 @@ export default function BuilderSection({
                       </a>
                     )}
                     {a.note && <span className="block text-xs text-slate-500">{a.note}</span>}
+                    {a.ageNotesYounger && (
+                      <span className="block text-xs text-slate-400">
+                        <span className="font-semibold text-amber-200/80">3–9:</span> {a.ageNotesYounger}
+                      </span>
+                    )}
+                    {a.ageNotesOlder && (
+                      <span className="block text-xs text-slate-400">
+                        <span className="font-semibold text-amber-200/80">10+:</span> {a.ageNotesOlder}
+                      </span>
+                    )}
                   </td>
                   <td className="text-slate-300">{a.type === "full" ? "Full" : "Half"}</td>
                   <td className="text-slate-300">{AGE_LABEL[a.ageFit]}</td>
