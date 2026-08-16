@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Activity, Build, Hotel, OptionId, TripData } from "@/lib/types";
 import {
   activityCostForParty,
@@ -55,6 +55,16 @@ export default function BuilderSection({
   const [filterAge, setFilterAge] = useState<"all" | "younger" | "older">("all");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [showAllActivities, setShowAllActivities] = useState(false);
+  // Guided flow: after hotels are picked glide to activities; after the last free
+  // day is filled glide to the total. Tracks clicks this visit, per option.
+  const [pickedSegs, setPickedSegs] = useState<("pre" | "post")[]>([]);
+  const [touchedDays, setTouchedDays] = useState<string[]>([]);
+  useEffect(() => {
+    setPickedSegs([]);
+    setTouchedDays([]);
+  }, [optionId]);
+  const glideTo = (id: string) =>
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
 
   const option = data.dateOptions.find((o) => o.id === optionId)!;
   const slots = data.slots.filter((s) => s.optionId === optionId);
@@ -115,9 +125,16 @@ export default function BuilderSection({
     return (
       <button
         key={`${segment}-${h.id}`}
-        onClick={() =>
-          onUpdateBuild(segment === "pre" ? { ...build, preHotelId: h.id } : { ...build, postHotelId: h.id })
-        }
+        onClick={() => {
+          onUpdateBuild(segment === "pre" ? { ...build, preHotelId: h.id } : { ...build, postHotelId: h.id });
+          const segs = pickedSegs.includes(segment) ? pickedSegs : [...pickedSegs, segment];
+          setPickedSegs(segs);
+          const needed: ("pre" | "post")[] = [
+            ...(option.preNights > 0 ? (["pre"] as const) : []),
+            ...(option.postNights > 0 ? (["post"] as const) : []),
+          ];
+          if (needed.every((seg) => segs.includes(seg))) glideTo("pick-activities");
+        }}
         className={`w-full border-l-[3px] px-4 py-2.5 text-left transition ${
           h.type === "airbnb" ? "border-l-emerald-300/70" : "border-l-sky-300/50"
         } ${selected ? "bg-amber-300/10" : h.type === "airbnb" ? "bg-emerald-400/[0.05] hover:bg-emerald-400/10" : "hover:bg-white/5"}`}
@@ -304,7 +321,7 @@ export default function BuilderSection({
       </p>
 
       {/* 1 · Hotels, two segments */}
-      <h3 className="font-display mt-8 text-xl tracking-wide text-white">1 · Pick your hotels</h3>
+      <h3 id="pick-hotels" className="font-display mt-8 scroll-mt-40 text-xl tracking-wide text-white">1 · Pick your hotels</h3>
       {(segDates.pre || segDates.post) && (
         <div className="mt-2 flex flex-wrap gap-2">
           {(
@@ -343,7 +360,7 @@ export default function BuilderSection({
       {!segDates.pre && !segDates.post && <p className="mt-2 text-sm text-slate-400">No hotel nights for this option.</p>}
 
       {/* 3 · Activities per free day */}
-      <h3 className="font-display mt-8 text-xl tracking-wide text-white">2 · Fill your free days</h3>
+      <h3 id="pick-activities" className="font-display mt-8 scroll-mt-40 text-xl tracking-wide text-white">2 · Fill your free days</h3>
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {freeSlots.map((s) => {
           const eligible = data.activities
@@ -365,9 +382,12 @@ export default function BuilderSection({
               </p>
               <select
                 value={build.activities[s.date] ?? ""}
-                onChange={(e) =>
-                  onUpdateBuild({ ...build, activities: { ...build.activities, [s.date]: e.target.value || null } })
-                }
+                onChange={(e) => {
+                  onUpdateBuild({ ...build, activities: { ...build.activities, [s.date]: e.target.value || null } });
+                  const days = touchedDays.includes(s.date) ? touchedDays : [...touchedDays, s.date];
+                  setTouchedDays(days);
+                  if (days.length >= freeSlots.length) glideTo("your-total");
+                }}
                 className={`${selCls} mt-2 w-full`}
               >
                 <option value="">— rest / nothing planned —</option>
@@ -519,7 +539,7 @@ export default function BuilderSection({
       </details>
 
       {/* Total */}
-      <section className="mt-8 rounded-3xl border border-amber-300/30 bg-amber-300/5 p-5 backdrop-blur-md">
+      <section id="your-total" className="mt-8 scroll-mt-40 rounded-3xl border border-amber-300/30 bg-amber-300/5 p-5 backdrop-blur-md">
         <h3 className="text-sm font-semibold text-slate-300">
           {familyLabel} · Option {option.id}
           {isCustomized ? " (your build)" : " (suggested plan)"} :{" "}

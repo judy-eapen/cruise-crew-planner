@@ -335,6 +335,8 @@ export default function Planner() {
               setSelectedOption(id);
               setHasSelection(true);
               updateBuild(id, { ...effectiveBuild(id), flightId: quoteId });
+              // Guided flow: flight chosen → glide down to the hotel pickers.
+              setTimeout(() => document.getElementById("pick-hotels")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
             }}
             onSelectOption={(id) => {
               setSelectedOption(id);
