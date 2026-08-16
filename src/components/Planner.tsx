@@ -399,7 +399,7 @@ export default function Planner() {
         <p className="border-t border-white/10 px-5 pt-4 text-xs text-slate-400 lg:px-12">
           Prices checked {priceChecked} · ~ marks estimated prices pending confirmation · park child pricing =
           ages 3–9; kids 10+ pay adult prices; all kids pay adult airfare · checked bags assumed $50 each
-          (round trip) unless a flight quote says otherwise · only nonstop flights were searched · the crew table applies your picks (or the
+          (round trip) unless a flight quote says otherwise · flights are nonstop unless marked with a stop count · the crew table applies your picks (or the
           suggested plan) to every family&apos;s size
         </p>
       </main>

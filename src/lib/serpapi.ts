@@ -1,10 +1,20 @@
 // Server-only SerpApi Google Flights client for the admin "Refresh fares" button.
-// Fares are round-trip totals per adult (kids 2+ pay the same), nonstop only,
-// 737 MAX 8 itineraries dropped (scheduled equipment — airlines can swap planes).
+// Every search is a same-airport round trip (X → MCO → X) by construction.
+// Fares are round-trip totals per adult (kids 2+ pay the same). Bag fee is the
+// $50/bag round-trip assumption for every airline (Southwest ended free bags in 2025).
 
 import type { Origin } from "@/lib/types";
 
 const ORIGINS: Origin[] = ["BWI", "DCA", "IAD"];
+const BAG_FEE = 50;
+
+export interface FareFilters {
+  outboundTimes: string; // SerpApi hour window "10,19" = depart 10am-7pm ("" = any)
+  returnTimes: string;
+  nonstopOnly: boolean;
+  excludeMax8: boolean;
+  includeAirlines: string; // comma-separated IATA codes "DL,WN" ("" = all airlines)
+}
 
 export interface FetchedQuote {
   origin: Origin;
@@ -40,7 +50,6 @@ async function serp(params: Record<string, string>): Promise<any> {
     currency: "USD",
     hl: "en",
     adults: "1",
-    stops: "1", // SerpApi's value for nonstop-only
     api_key: key,
     ...params,
   });
@@ -65,43 +74,65 @@ const fmtDuration = (mins: number | undefined): string =>
 const normalizeAirline = (name: string | undefined): string =>
   (name ?? "Unknown").replace(/\s+Air\s*Lines?$/i, "").replace(/\s+Airways$/i, "").trim();
 
-const usableItineraries = (json: any): any[] =>
+const sanitizeAirlineCodes = (raw: string): string =>
+  raw
+    .toUpperCase()
+    .split(",")
+    .map((c) => c.trim())
+    .filter((c) => /^[A-Z0-9]{2,3}$/.test(c))
+    .join(",");
+
+const usableItineraries = (json: any, f: FareFilters): any[] =>
   [...(json.best_flights ?? []), ...(json.other_flights ?? [])]
-    .filter((it: any) => (it.flights?.length ?? 0) === 1) // nonstop = single leg
-    .filter((it: any) => !String(it.flights[0].airplane ?? "").toUpperCase().includes("MAX 8"))
+    .filter((it: any) => (it.flights?.length ?? 0) >= 1)
+    .filter((it: any) => !f.nonstopOnly || it.flights.length === 1)
+    .filter(
+      (it: any) =>
+        !f.excludeMax8 ||
+        !it.flights.some((leg: any) => String(leg.airplane ?? "").toUpperCase().includes("MAX 8"))
+    )
     .filter((it: any) => Number(it.price) > 0);
 
 const isDeltaItin = (c: Candidate) => normalizeAirline(c.itin.flights[0].airline) === "Delta";
 
+// First leg's airline; multi-leg itineraries get the stop count appended so the
+// app (which normally speaks nonstop-only) stays honest about them.
+const airlineLabel = (itin: any): string => {
+  const base = normalizeAirline(itin.flights[0].airline);
+  const stops = itin.flights.length - 1;
+  return stops > 0 ? `${base} · ${stops} stop${stops > 1 ? "s" : ""}` : base;
+};
+
 /**
- * Fetch the top-5 cheapest nonstop round trips (pooled across BWI/DCA/IAD → MCO)
- * for one date pair, plus the cheapest Delta if it didn't make the cut.
- * Time windows are SerpApi hour ranges like "6,12" (depart between 6am and noon).
+ * Fetch the top-N cheapest round trips (pooled across BWI/DCA/IAD → MCO) for one
+ * date pair under the given filters, plus the cheapest Delta if it didn't make
+ * the cut (skipped when an airline filter excludes DL).
  */
 export async function fetchQuotesForOption(
   departDate: string,
   returnDate: string,
-  outboundTimes: string,
-  returnTimes: string,
+  filters: FareFilters,
   topN = 4
 ): Promise<OptionRefreshResult> {
   const warnings: string[] = [];
   let searches = 0;
-  const timeParams: Record<string, string> = {};
-  if (/^\d{1,2},\d{1,2}$/.test(outboundTimes)) timeParams.outbound_times = outboundTimes;
-  if (/^\d{1,2},\d{1,2}$/.test(returnTimes)) timeParams.return_times = returnTimes;
+
+  const baseParams: Record<string, string> = {
+    outbound_date: departDate,
+    return_date: returnDate,
+    stops: filters.nonstopOnly ? "1" : "0", // SerpApi: 1 = nonstop only, 0 = any
+  };
+  if (/^\d{1,2},\d{1,2}$/.test(filters.outboundTimes)) baseParams.outbound_times = filters.outboundTimes;
+  if (/^\d{1,2},\d{1,2}$/.test(filters.returnTimes)) baseParams.return_times = filters.returnTimes;
+  const codes = sanitizeAirlineCodes(filters.includeAirlines);
+  if (codes) baseParams.include_airlines = codes;
 
   const candidates: Candidate[] = [];
   for (const origin of ORIGINS) {
     try {
-      const json = await serp({
-        departure_id: origin,
-        outbound_date: departDate,
-        return_date: returnDate,
-        ...timeParams,
-      });
+      const json = await serp({ departure_id: origin, ...baseParams });
       searches++;
-      for (const itin of usableItineraries(json)) candidates.push({ origin, itin });
+      for (const itin of usableItineraries(json, filters)) candidates.push({ origin, itin });
     } catch (e) {
       searches++;
       warnings.push(`${origin}: ${e instanceof Error ? e.message : "search failed"}`);
@@ -110,22 +141,17 @@ export async function fetchQuotesForOption(
   candidates.sort((a, b) => Number(a.itin.price) - Number(b.itin.price));
 
   const finalists = candidates.slice(0, topN);
-  // Delta pin: the base searches include all airlines, so an extra DL-only search
-  // is only worth a credit if no Delta itinerary surfaced at all.
+  // Delta pin: base searches include all airlines, so an extra DL-only search is
+  // only worth a credit when no Delta surfaced — and only if DL isn't filtered out.
+  const deltaAllowed = !codes || codes.split(",").includes("DL");
   const cheapestDelta = candidates.find(isDeltaItin);
   if (cheapestDelta && !finalists.includes(cheapestDelta)) finalists.push(cheapestDelta);
-  if (!cheapestDelta) {
+  if (!cheapestDelta && deltaAllowed) {
     for (const origin of ORIGINS) {
       try {
-        const json = await serp({
-          departure_id: origin,
-          outbound_date: departDate,
-          return_date: returnDate,
-          include_airlines: "DL",
-          ...timeParams,
-        });
+        const json = await serp({ departure_id: origin, ...baseParams, include_airlines: "DL" });
         searches++;
-        const itins = usableItineraries(json);
+        const itins = usableItineraries(json, filters);
         if (itins.length) {
           finalists.push({ origin, itin: itins[0] });
           break;
@@ -139,7 +165,9 @@ export async function fetchQuotesForOption(
   // Resolve return-leg times (and the true round-trip total) via departure_token.
   const quotes: FetchedQuote[] = [];
   for (const c of finalists) {
-    const out = c.itin.flights[0];
+    const legs = c.itin.flights;
+    const firstLeg = legs[0];
+    const lastLeg = legs[legs.length - 1];
     let retDepart = "TBD";
     let retArrive = "TBD";
     let price = Number(c.itin.price);
@@ -147,36 +175,33 @@ export async function fetchQuotesForOption(
       try {
         const json = await serp({
           departure_id: c.origin,
-          outbound_date: departDate,
-          return_date: returnDate,
+          ...baseParams,
           departure_token: String(c.itin.departure_token),
-          ...timeParams,
         });
         searches++;
-        const rets = usableItineraries(json).sort((a, b) => Number(a.price) - Number(b.price));
+        const rets = usableItineraries(json, filters).sort((a, b) => Number(a.price) - Number(b.price));
         if (rets.length) {
-          const leg = rets[0].flights[0];
-          retDepart = fmtTime(leg.departure_airport?.time);
-          retArrive = fmtTime(leg.arrival_airport?.time);
+          const rLegs = rets[0].flights;
+          retDepart = fmtTime(rLegs[0].departure_airport?.time);
+          retArrive = fmtTime(rLegs[rLegs.length - 1].arrival_airport?.time);
           price = Number(rets[0].price);
         }
       } catch {
         searches++;
-        warnings.push(`${c.origin} ${normalizeAirline(out.airline)}: return-leg lookup failed (times TBD)`);
+        warnings.push(`${c.origin} ${airlineLabel(c.itin)}: return-leg lookup failed (times TBD)`);
       }
     }
-    const airline = normalizeAirline(out.airline);
     quotes.push({
       origin: c.origin,
-      airline,
-      outDepart: fmtTime(out.departure_airport?.time),
-      outArrive: fmtTime(out.arrival_airport?.time),
+      airline: airlineLabel(c.itin),
+      outDepart: fmtTime(firstLeg.departure_airport?.time),
+      outArrive: fmtTime(lastLeg.arrival_airport?.time),
       retDepart,
       retArrive,
-      duration: fmtDuration(out.duration),
+      duration: fmtDuration(c.itin.total_duration ?? firstLeg.duration),
       farePerPerson: price,
-      bagFee: airline === "Southwest" ? 0 : 50,
-      isDelta: airline === "Delta",
+      bagFee: BAG_FEE,
+      isDelta: normalizeAirline(firstLeg.airline) === "Delta",
     });
   }
   // Dedupe (Delta pin can duplicate a finalist after return resolution)

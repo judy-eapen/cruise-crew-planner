@@ -240,7 +240,7 @@ export async function POST(req: Request) {
       // loops so each request stays under Vercel's time limit and shows progress).
       // Only rows with source='api' are ever replaced; manual rows are untouchable.
       case "refresh-fares": {
-        const { optionId, outboundTimes, returnTimes } = payload;
+        const { optionId, outboundTimes, returnTimes, nonstopOnly, excludeMax8, includeAirlines } = payload;
         const { data: opt, error: optErr } = await supabase
           .from("date_options")
           .select("id,depart_date,return_date,post_nights")
@@ -256,7 +256,13 @@ export async function POST(req: Request) {
           retWin = `${Math.max(13, start)},${Math.max(14, end)}`;
         }
 
-        const result = await fetchQuotesForOption(opt.depart_date, opt.return_date, String(outboundTimes ?? ""), retWin);
+        const result = await fetchQuotesForOption(opt.depart_date, opt.return_date, {
+          outboundTimes: String(outboundTimes ?? ""),
+          returnTimes: retWin,
+          nonstopOnly: nonstopOnly !== false, // default on
+          excludeMax8: excludeMax8 !== false, // default on
+          includeAirlines: String(includeAirlines ?? ""),
+        });
         if (result.quotes.length) {
           const del = await supabase.from("flights").delete().eq("option_id", opt.id).eq("source", "api");
           if (del.error) throw new Error(del.error.message);

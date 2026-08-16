@@ -26,7 +26,13 @@ export default function AdminPage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "", shf: "7", hbr: "", hbd: "", hba: "", hsl: "" });
   const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
-  const [fareWin, setFareWin] = useState({ out: "", back: "" }); // SerpApi hour windows, e.g. "6,12"
+  const [fareFilters, setFareFilters] = useState({
+    out: "", // depart-hour window "10,19" = 10am-7pm ("" = any)
+    back: "",
+    nonstop: true,
+    noMax8: true,
+    airlines: "", // IATA codes "DL,WN" ("" = all)
+  });
   const [refreshing, setRefreshing] = useState(false);
 
   const call = useCallback(
@@ -101,7 +107,17 @@ export default function AdminPage() {
     for (const id of optionIds) {
       setStatus(`↻ Option ${id}: searching Google Flights…${totalAdded ? ` (${totalAdded} quotes so far)` : ""}`);
       try {
-        const r = await call({ action: "refresh-fares", payload: { optionId: id, outboundTimes: fareWin.out.trim(), returnTimes: fareWin.back.trim() } });
+        const r = await call({
+          action: "refresh-fares",
+          payload: {
+            optionId: id,
+            outboundTimes: fareFilters.out.trim(),
+            returnTimes: fareFilters.back.trim(),
+            nonstopOnly: fareFilters.nonstop,
+            excludeMax8: fareFilters.noMax8,
+            includeAirlines: fareFilters.airlines.trim(),
+          },
+        });
         totalAdded += r.added ?? 0;
         totalSearches += r.searches ?? 0;
         if (r.warnings?.length) problems.push(...r.warnings.map((w: string) => `${id}: ${w}`));
@@ -244,28 +260,41 @@ export default function AdminPage() {
         <section className={cardCls}>
           <h2 className="font-bold text-white">Flight quotes</h2>
           <p className="mt-1 text-sm text-slate-400">
-            ~3 real quotes per option, NONSTOP flights only (the app surfaces them cheapest-first). Fare = round trip per person; bag
-            fee = round trip per checked bag ($0 if bags fly free, e.g. Southwest). Saving stamps today&apos;s
+            Real quotes per option, cheapest-first in the app. Fare = round trip per person; bag
+            fee = round trip per checked bag (every airline charges now — $50 assumption). Saving stamps today&apos;s
             date and clears the ~ estimate flag. Delete the TBD placeholders as real quotes land.
           </p>
           {/* Live fares via SerpApi */}
-          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm">
-            <span className="font-bold text-cyan-200">🔄 Live fares</span>
-            <span className="text-xs text-slate-400">out window</span>
-            <input className={`${txtCls} w-16`} placeholder="6,12" value={fareWin.out} onChange={(e) => setFareWin({ ...fareWin, out: e.target.value })} title="Depart-hour window, 24h: 6,12 = 6am–noon. Blank = any time." />
-            <span className="text-xs text-slate-400">back window</span>
-            <input className={`${txtCls} w-16`} placeholder="15,23" value={fareWin.back} onChange={(e) => setFareWin({ ...fareWin, back: e.target.value })} title="Return depart-hour window. Blank = any time. Off-ship days auto-floor to 1 PM." />
-            <button
-              onClick={() => refreshFares(data?.dateOptions.map((o) => o.id) ?? [])}
-              disabled={refreshing}
-              className={`${btnCls} disabled:opacity-50`}
-            >
-              {refreshing ? "Fetching…" : "↻ Refresh all 6 options"}
-            </button>
-            <span className="text-xs text-slate-500">
-              nonstop only · no 737 MAX 8 · top 4 + cheapest Delta per option · all ≈ 40 of your 100 free monthly
-              searches — the per-option ↻ buttons (~7 each) stretch the quota · ✍️ manual quotes are never touched
-            </span>
+          <div className="mt-3 rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="font-bold text-cyan-200">🔄 Live fares</span>
+              <span className="text-xs text-slate-400">out depart</span>
+              <input className={`${txtCls} w-16`} placeholder="10,19" value={fareFilters.out} onChange={(e) => setFareFilters({ ...fareFilters, out: e.target.value })} title="Depart-hour window, 24h clock: 10,19 = between 10 AM and 7 PM. Blank = any time." />
+              <span className="text-xs text-slate-400">back depart</span>
+              <input className={`${txtCls} w-16`} placeholder="10,19" value={fareFilters.back} onChange={(e) => setFareFilters({ ...fareFilters, back: e.target.value })} title="Return depart-hour window. Blank = any time. Off-ship days auto-floor to 1 PM." />
+              <label className="flex items-center gap-1 text-xs text-slate-300">
+                <input type="checkbox" checked={fareFilters.nonstop} onChange={(e) => setFareFilters({ ...fareFilters, nonstop: e.target.checked })} />
+                nonstop only
+              </label>
+              <label className="flex items-center gap-1 text-xs text-slate-300">
+                <input type="checkbox" checked={fareFilters.noMax8} onChange={(e) => setFareFilters({ ...fareFilters, noMax8: e.target.checked })} />
+                no 737 MAX 8
+              </label>
+              <span className="text-xs text-slate-400">airlines</span>
+              <input className={`${txtCls} w-24`} placeholder="all · DL,WN" value={fareFilters.airlines} onChange={(e) => setFareFilters({ ...fareFilters, airlines: e.target.value })} title="Only these airlines, as IATA codes: DL Delta · WN Southwest · UA United · AA American · F9 Frontier · B6 JetBlue · NK Spirit. Blank = all." />
+              <button
+                onClick={() => refreshFares(data?.dateOptions.map((o) => o.id) ?? [])}
+                disabled={refreshing}
+                className={`${btnCls} disabled:opacity-50`}
+              >
+                {refreshing ? "Fetching…" : "↻ Refresh all 6 options"}
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-slate-500">
+              ✓ always same-airport round trips (BWI→MCO→BWI etc.) · top 4 + cheapest Delta per option · bags
+              assumed $50/each round trip on every airline · full refresh ≈ 40 of your 100 free monthly searches —
+              per-option ↻ (~7 each) stretches the quota · ✍️ manual quotes are never touched
+            </p>
           </div>
           {data?.dateOptions.map((o) => (
             <div key={o.id} className="mt-4 border-t border-white/10 pt-3">
