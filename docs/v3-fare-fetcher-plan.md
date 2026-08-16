@@ -53,4 +53,4 @@ An admin **"↻ Refresh fares"** button that queries SerpApi's Google Flights AP
 
 ## Kickoff prompt for the new session
 
-> Read `docs/v3-fare-fetcher-plan.md` in ~/Desktop/Projects/cruise-crew-planner and my memory file for cruise-crew-planner, then build the Amadeus fare fetcher exactly per the plan. My search filters are: [PASTE YOUR TIME WINDOWS / FILTERS HERE]. My Amadeus keys are set in Vercel and .env.local.
+> Read `docs/v3-fare-fetcher-plan.md` in ~/Desktop/Projects/cruise-crew-planner and my memory file for cruise-crew-planner, then build the SerpApi Google Flights fare fetcher exactly per the plan. My search filters are: [PASTE YOUR TIME WINDOWS / FILTERS HERE]. My SERPAPI_KEY is set in Vercel and .env.local.
