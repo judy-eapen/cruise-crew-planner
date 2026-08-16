@@ -23,7 +23,7 @@ export default function AdminPage() {
   const [data, setData] = useState<TripData | null>(null);
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "" });
+  const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "", shf: "7", hbr: "", hbd: "", hba: "", hsl: "" });
   const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
 
   const call = useCallback(
@@ -472,8 +472,30 @@ export default function AdminPage() {
               ))}
               <select className={selCls} value={newHotel.mode} onChange={(e) => setNewHotel({ ...newHotel, mode: e.target.value })}>
                 <option value="per_room_night">stay total · per room</option>
-                <option value="per_property_night_split">stay total · whole place, split (set count after saving)</option>
+                <option value="per_property_night_split">stay total · whole place, split</option>
               </select>
+              {newHotel.type === "airbnb" && (
+                <>
+                  <label className="flex items-center gap-1 text-xs text-slate-400">
+                    split
+                    <input className="w-10 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={newHotel.shf} onChange={(e) => setNewHotel({ ...newHotel, shf: e.target.value })} />
+                    ways
+                  </label>
+                  {(
+                    [
+                      ["BR", "hbr"],
+                      ["beds", "hbd"],
+                      ["baths", "hba"],
+                      ["sleeps", "hsl"],
+                    ] as const
+                  ).map(([label, key]) => (
+                    <label key={key} className="flex items-center gap-1 text-xs text-slate-400">
+                      {label}
+                      <input className="w-10 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={newHotel[key]} onChange={(e) => setNewHotel({ ...newHotel, [key]: e.target.value })} />
+                    </label>
+                  ))}
+                </>
+              )}
               <select className={selCls} value={newHotel.type} onChange={(e) => setNewHotel({ ...newHotel, type: e.target.value })}>
                 <option value="hotel">🏨 hotel</option>
                 <option value="airbnb">🏡 airbnb</option>
@@ -501,12 +523,16 @@ export default function AdminPage() {
                         breakfastIncluded: false,
                         amenities: "",
                         link: newHotel.link,
-                        sharedFamilies: 7,
+                        sharedFamilies: Number(newHotel.shf || 7),
+                        bedrooms: Number(newHotel.hbr || 0),
+                        beds: Number(newHotel.hbd || 0),
+                        baths: Number(newHotel.hba || 0),
+                        sleeps: Number(newHotel.hsl || 0),
                       },
                     },
                     "Added ✓"
                   );
-                  setNewHotel({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "" });
+                  setNewHotel({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "", shf: "7", hbr: "", hbd: "", hba: "", hsl: "" });
                 }}
                 className={btnCls}
               >
