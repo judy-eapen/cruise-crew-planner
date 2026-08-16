@@ -78,11 +78,15 @@ export default function BuilderSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, filterType, filterCost, filterAge, sortDir, party]);
 
+  // Strip iconography reads as the journey: fly days show the plane, boarding
+  // day (Nov 2) joins the cruise block, everything else follows its slot.
   const dayInfo = (iso: string) => {
+    if (iso === option.departDate || iso === option.returnDate)
+      return { date: iso, dayLabel: "Fly", slotType: "travel" as const, activityId: null };
+    if (CRUISE_DAYS.includes(iso))
+      return { date: iso, dayLabel: "Cruise", slotType: "cruise" as const, activityId: null };
     const slot = slots.find((s) => s.date === iso);
     if (slot) return slot;
-    if (CRUISE_DAYS.includes(iso) || iso === "2026-11-06")
-      return { date: iso, dayLabel: "Cruise", slotType: "cruise" as const, activityId: null };
     return { date: iso, dayLabel: "", slotType: "travel" as const, activityId: null };
   };
 
