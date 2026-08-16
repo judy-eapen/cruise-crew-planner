@@ -7,13 +7,14 @@ import { costForBuild, defaultBuild, partyFromFamily, type PartySize } from "@/l
 import FlightsGlance from "./FlightsGlance";
 import FireworksBackdrop from "./FireworksBackdrop";
 import BuilderSection from "./BuilderSection";
+import PicksCompare from "./PicksCompare";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
 
 const SECTIONS = [
   { id: "flights", label: "Flights" },
   { id: "build", label: "Build" },
-  { id: "group", label: "Group" },
+  { id: "group", label: "Compare" },
   { id: "vote", label: "Vote" },
 ] as const;
 
@@ -335,8 +336,27 @@ export default function Planner() {
         </section>
 
         <section id="group" className="scroll-mt-40">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">03 · The whole crew</p>
-          <GroupTab data={data} />
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">03 · Compare your picks</p>
+          <PicksCompare
+            data={data}
+            party={party}
+            familyLabel={familyLabel}
+            buildFor={effectiveBuild}
+            isCustomized={(id) => Boolean(builds[id])}
+            onEdit={(id) => {
+              setSelectedOption(id);
+              setHasSelection(true);
+              document.getElementById("build")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+          <details className="mt-8">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-400 hover:text-slate-200">
+              👨‍👩‍👧‍👦 Organizer view: every family × every option (suggested plan)
+            </summary>
+            <div className="mt-3">
+              <GroupTab data={data} />
+            </div>
+          </details>
         </section>
 
         <section id="vote" className="scroll-mt-40">
