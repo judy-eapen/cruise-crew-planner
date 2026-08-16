@@ -100,13 +100,22 @@ export default function AdminPage() {
 
   // Live fares: one API call per option (sequential) so progress is visible and
   // no single request outlives Vercel's window. Manual quotes are never touched.
+  const fareFilterDesc = () =>
+    [
+      fareFilters.out.trim() ? `out ${fareFilters.out.trim()}h` : "out any",
+      fareFilters.back.trim() ? `back ${fareFilters.back.trim()}h` : "back any",
+      fareFilters.nonstop ? "nonstop" : "stops ok",
+      fareFilters.noMax8 ? "no MAX 8" : "MAX 8 ok",
+      fareFilters.airlines.trim() ? `only ${fareFilters.airlines.trim().toUpperCase()}` : "all airlines",
+    ].join(" · ");
+
   const refreshFares = async (optionIds: string[]) => {
     setRefreshing(true);
     let totalAdded = 0;
     let totalSearches = 0;
     const problems: string[] = [];
     for (const id of optionIds) {
-      setFareStatus(`↻ Option ${id}: searching Google Flights…${totalAdded ? ` (${totalAdded} quotes so far)` : ""}`);
+      setFareStatus(`↻ Option ${id}: searching Google Flights [${fareFilterDesc()}]…${totalAdded ? ` (${totalAdded} quotes so far)` : ""}`);
       try {
         const r = await call({
           action: "refresh-fares",
@@ -128,7 +137,7 @@ export default function AdminPage() {
       }
     }
     setFareStatus(
-      `${totalAdded ? "✓" : "⚠"} Fetched ${totalAdded} fresh quotes (${totalSearches} SerpApi searches used)` +
+      `${totalAdded ? "✓" : "⚠"} Fetched ${totalAdded} fresh quotes [${fareFilterDesc()}] (${totalSearches} SerpApi searches used)` +
         (problems.length ? ` · ⚠ ${problems.join(" · ")}` : "")
     );
     setRefreshing(false);
@@ -270,9 +279,9 @@ export default function AdminPage() {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <span className="font-bold text-cyan-200">🔄 Live fares</span>
               <span className="text-xs text-slate-400">out depart</span>
-              <input className={`${txtCls} w-16`} placeholder="10,19" value={fareFilters.out} onChange={(e) => setFareFilters({ ...fareFilters, out: e.target.value })} title="Depart-hour window, 24h clock: 10,19 = between 10 AM and 7 PM. Blank = any time." />
+              <input className={`${txtCls} w-16`} placeholder="any" value={fareFilters.out} onChange={(e) => setFareFilters({ ...fareFilters, out: e.target.value })} title="Depart-hour window, 24h clock — TYPE IT to apply, e.g. 10,19 = between 10 AM and 7 PM. Blank = any time." />
               <span className="text-xs text-slate-400">back depart</span>
-              <input className={`${txtCls} w-16`} placeholder="10,19" value={fareFilters.back} onChange={(e) => setFareFilters({ ...fareFilters, back: e.target.value })} title="Return depart-hour window. Blank = any time. Off-ship days auto-floor to 1 PM." />
+              <input className={`${txtCls} w-16`} placeholder="any" value={fareFilters.back} onChange={(e) => setFareFilters({ ...fareFilters, back: e.target.value })} title="Return depart-hour window, e.g. 10,19. Blank = any time. Off-ship days auto-floor to 1 PM." />
               <label className="flex items-center gap-1 text-xs text-slate-300">
                 <input type="checkbox" checked={fareFilters.nonstop} onChange={(e) => setFareFilters({ ...fareFilters, nonstop: e.target.checked })} />
                 nonstop only
@@ -282,7 +291,7 @@ export default function AdminPage() {
                 no 737 MAX 8
               </label>
               <span className="text-xs text-slate-400">airlines</span>
-              <input className={`${txtCls} w-24`} placeholder="all · DL,WN" value={fareFilters.airlines} onChange={(e) => setFareFilters({ ...fareFilters, airlines: e.target.value })} title="Only these airlines, as IATA codes: DL Delta · WN Southwest · UA United · AA American · F9 Frontier · B6 JetBlue · NK Spirit. Blank = all." />
+              <input className={`${txtCls} w-24`} placeholder="all" value={fareFilters.airlines} onChange={(e) => setFareFilters({ ...fareFilters, airlines: e.target.value })} title="Only these airlines, as IATA codes (e.g. DL,WN): DL Delta · WN Southwest · UA United · AA American · F9 Frontier · B6 JetBlue · NK Spirit. Blank = all." />
               <button
                 onClick={() => refreshFares(data?.dateOptions.map((o) => o.id) ?? [])}
                 disabled={refreshing}
