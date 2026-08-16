@@ -99,9 +99,14 @@ export async function POST(req: Request) {
             }))
           )
         );
+        // Activities: only insert missing ones so admin price edits survive re-seeding.
+        const { data: existingActs } = await supabase.from("activities").select("id");
+        const haveActs = new Set((existingActs ?? []).map((r: any) => r.id));
+        const missingActs = SEED.activities.filter((a) => !haveActs.has(a.id));
+        if (missingActs.length)
         await err(
-          supabase.from("activities").upsert(
-            SEED.activities.map((a) => ({
+          supabase.from("activities").insert(
+            missingActs.map((a) => ({
               id: a.id,
               name: a.name,
               type: a.type,

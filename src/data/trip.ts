@@ -86,6 +86,18 @@ const ACTIVITIES: Activity[] = [
   { id: "POOL", name: "Hotel pool time", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: false, note: "Universal win with 14 kids" },
   { id: "COCOA", name: "Cocoa Beach", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "port", star: true, estimate: false, note: "~1 hr drive; pairs well with disembark day" },
   { id: "BEACH", name: "Beach day (Cocoa Beach / New Smyrna)", type: "full", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "daytrip", star: true, estimate: false },
+  { id: "US", name: "Universal Studios", type: "full", adultPrice: 140, childPrice: 135, category: "Theme park", ageFit: "older", area: "orlando", star: false, estimate: true, note: "Harry Potter Diagon Alley; good for 8+, may be intense for the 4–6yos" },
+  { id: "IOA", name: "Islands of Adventure", type: "full", adultPrice: 140, childPrice: 135, category: "Theme park", ageFit: "older", area: "orlando", star: false, estimate: true, note: "Harry Potter Hogsmeade + Hagrid coaster; best for the 10–13s" },
+  { id: "EP", name: "Epcot", type: "full", adultPrice: 140, childPrice: 130, category: "Theme park", ageFit: "older", area: "orlando", star: false, estimate: true, note: "Good for 8+; the 4–6yos may get restless (less ride-heavy)" },
+  { id: "BG", name: "Busch Gardens Tampa", type: "full", adultPrice: 120, childPrice: 110, category: "Theme park", ageFit: "older", area: "daytrip", star: false, estimate: true, note: "Thrill rides for 8+; ~90 min drive each way" },
+  { id: "DC", name: "Discovery Cove", type: "full", adultPrice: 220, childPrice: 220, category: "Attraction", ageFit: "check", area: "orlando", star: false, estimate: true, note: "All-inclusive; dolphin swim has age/height minimums — may exclude the 4yo" },
+  { id: "ESCAPE", name: "Escape rooms", type: "half", adultPrice: 38, childPrice: 38, category: "Attraction", ageFit: "older", area: "orlando", star: false, estimate: true, note: "Best for the 10–13s; too advanced for littles" },
+  { id: "TREK", name: "Tree Trek Adventure Park", type: "half", adultPrice: 60, childPrice: 40, category: "Attraction", ageFit: "check", area: "orlando", star: false, estimate: true, note: "Height/weight requirements likely exclude the 4–5yos" },
+  { id: "OLDTOWN", name: "Old Town Kissimmee", type: "half", adultPrice: 0, childPrice: 25, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Free entry; ride passes per kid extra" },
+  { id: "EOLA", name: "Lake Eola Park", type: "half", adultPrice: 0, childPrice: 10, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Swan boats; especially nice for the youngest kids" },
+  { id: "PARKAVE", name: "Winter Park / Park Ave", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "orlando", star: false, estimate: false, note: "More geared to parents; kids may get bored shopping" },
+  { id: "OUTLETS", name: "Orlando Vineland Outlets", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "orlando", star: false, estimate: false, note: "Parents/teens; littles may get bored" },
+  { id: "WEKIWA", name: "State park day (Wekiwa Springs)", type: "full", adultPrice: 6, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "daytrip", star: false, estimate: true, note: "Good for 6+; ~$6/vehicle; hiking may be tough for the 4yo" },
 ];
 
 const ITINERARY_SLOTS: ItinerarySlot[] = [
