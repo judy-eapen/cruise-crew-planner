@@ -47,6 +47,7 @@ export interface Hotel {
   breakfastIncluded: boolean;
   amenities: string;
   link: string; // booking-site URL — families can click through for photos/details
+  sharedFamilies: number; // split-mode only: how many families share this property's cost
   estimate: boolean;
 }
 

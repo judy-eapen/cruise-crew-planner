@@ -66,6 +66,7 @@ const mapHotel = (r: any): Hotel => ({
   breakfastIncluded: r.breakfast_included ?? false,
   amenities: r.amenities ?? "",
   link: r.link ?? "",
+  sharedFamilies: r.shared_families ?? 7,
   estimate: r.estimate,
 });
 const mapActivity = (r: any): Activity => ({

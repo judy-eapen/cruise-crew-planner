@@ -347,7 +347,7 @@ export default function AdminPage() {
         <section className={cardCls}>
           <h2 className="font-bold text-white">Hotels & Airbnbs</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Four STAY TOTALS per property — enter exactly what the booking site quotes for 10/31→11/2, 11/1→11/2, 11/6→11/8, and 11/6→11/7 (the only stays any option uses; captures 2-night deals automatically). Each total is per room (hotels) or for the whole property split evenly across the{" "}
+            Four STAY TOTALS per property — enter exactly what the booking site quotes for 10/31→11/2, 11/1→11/2, 11/6→11/8, and 11/6→11/7 (the only stays any option uses). Leave a window's totals at 0 and the property only appears in the picker for the window it serves — so a before-cruise Airbnb and a separate after-cruise Airbnb are just two rows, each with its own split count. Each total is per room (hotels) or for the whole property split across its 'split N ways' count of{" "}
             {data?.families.length ?? 7} families (Airbnb mode).
           </p>
           <div className="mt-3 space-y-2">
@@ -371,8 +371,15 @@ export default function AdminPage() {
                   ))}
                   <select className={selCls} value={draft(k("mode"), h.priceMode)} onChange={(e) => setDraft(k("mode"), e.target.value)}>
                     <option value="per_room_night">stay total · per room</option>
-                    <option value="per_property_night_split">stay total · whole place, split 7 ways</option>
+                    <option value="per_property_night_split">stay total · whole place, split</option>
                   </select>
+                  {draft(k("mode"), h.priceMode) === "per_property_night_split" && (
+                    <label className="flex items-center gap-1 text-xs text-slate-400">
+                      split
+                      <input className="w-10 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={draft(k("shf"), h.sharedFamilies)} onChange={(e) => setDraft(k("shf"), e.target.value)} />
+                      ways
+                    </label>
+                  )}
                   <select className={selCls} value={draft(k("stars"), h.stars)} onChange={(e) => setDraft(k("stars"), e.target.value)}>
                     {[2, 3, 4, 5].map((s) => (
                       <option key={s} value={s}>
@@ -414,6 +421,7 @@ export default function AdminPage() {
                             breakfastIncluded: draft(k("bkf"), h.breakfastIncluded ? "1" : "") === "1",
                             amenities: h.amenities,
                             link: draft(k("link"), h.link),
+                            sharedFamilies: Number(draft(k("shf"), h.sharedFamilies)),
                           },
                         },
                         `Saved ${h.id} ✓`
@@ -446,7 +454,7 @@ export default function AdminPage() {
               ))}
               <select className={selCls} value={newHotel.mode} onChange={(e) => setNewHotel({ ...newHotel, mode: e.target.value })}>
                 <option value="per_room_night">stay total · per room</option>
-                <option value="per_property_night_split">stay total · whole place, split 7 ways</option>
+                <option value="per_property_night_split">stay total · whole place, split (set count after saving)</option>
               </select>
               <select className={selCls} value={newHotel.type} onChange={(e) => setNewHotel({ ...newHotel, type: e.target.value })}>
                 <option value="hotel">🏨 hotel</option>
@@ -475,6 +483,7 @@ export default function AdminPage() {
                         breakfastIncluded: false,
                         amenities: "",
                         link: newHotel.link,
+                        sharedFamilies: 7,
                       },
                     },
                     "Added ✓"

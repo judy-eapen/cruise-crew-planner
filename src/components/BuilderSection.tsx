@@ -6,6 +6,7 @@ import {
   costForBuild,
   fmt,
   hotelSegmentCost,
+  hotelsForSegment,
   segmentStay,
   quoteCostForParty,
   quotesForOption,
@@ -62,7 +63,6 @@ export default function BuilderSection({
   const cost = costForBuild(data, optionId, build, party);
   const days = isoRange(option.departDate, option.returnDate);
   const people = totalPeople(party);
-  const familyCount = Math.max(1, data.families.length);
 
   const ticketCost = (a: Activity) =>
     a.adultPrice * (party.adults + party.kids10plus) + a.childPrice * party.kids39;
@@ -102,7 +102,7 @@ export default function BuilderSection({
 
   const hotelCard = (h: Hotel, segment: "pre" | "post", nights: number) => {
     const selected = (segment === "pre" ? build.preHotelId : build.postHotelId) === h.id;
-    const segCost = hotelSegmentCost(h, segment, nights, party, familyCount);
+    const segCost = hotelSegmentCost(h, segment, nights, party);
     const stay = segmentStay(h, segment, nights);
     const rateText = stay ? `${stay.label}: ${fmt(stay.total)}` : "";
     return (
@@ -146,7 +146,7 @@ export default function BuilderSection({
         <p className="mt-1.5 text-sm text-amber-200">
           {h.estimate && "~"}
           {rateText}
-          {h.priceMode === "per_property_night_split" ? ` whole place, split ${familyCount} ways` : "/room for the stay"}{" "}
+          {h.priceMode === "per_property_night_split" ? ` whole place, split ${h.sharedFamilies} ways` : "/room for the stay"}{" "}
           → <span className="font-bold">{fmt(segCost)}</span> for {familyLabel}
         </p>
       </button>
@@ -266,7 +266,7 @@ export default function BuilderSection({
         <>
           <p className="mt-2 text-sm font-semibold text-slate-300">🌙 Before the cruise · {segDates.pre}</p>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {data.hotels.map((h) => hotelCard(h, "pre", option.preNights))}
+            {hotelsForSegment(data.hotels, "pre", option.preNights).map((h) => hotelCard(h, "pre", option.preNights))}
           </div>
         </>
       )}
@@ -274,7 +274,7 @@ export default function BuilderSection({
         <>
           <p className="mt-4 text-sm font-semibold text-slate-300">🌅 After the cruise · {segDates.post}</p>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {data.hotels.map((h) => hotelCard(h, "post", option.postNights))}
+            {hotelsForSegment(data.hotels, "post", option.postNights).map((h) => hotelCard(h, "post", option.postNights))}
           </div>
         </>
       )}

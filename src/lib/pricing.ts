@@ -66,15 +66,19 @@ export function hotelSegmentCost(
   hotel: Hotel,
   segment: "pre" | "post",
   nights: number,
-  party: PartySize,
-  familyCount: number
+  party: PartySize
 ): number {
   const stay = segmentStay(hotel, segment, nights);
   if (!stay || stay.total <= 0) return 0;
   if (hotel.priceMode === "per_property_night_split") {
-    return Math.round(stay.total / Math.max(1, familyCount));
+    return Math.round(stay.total / Math.max(1, hotel.sharedFamilies));
   }
   return stay.total * party.rooms;
+}
+
+/** Properties offered for a segment: those with a real price for that window. */
+export function hotelsForSegment(hotels: Hotel[], segment: "pre" | "post", nights: number): Hotel[] {
+  return hotels.filter((h) => (segmentStay(h, segment, nights)?.total ?? 0) > 0);
 }
 
 /** The organizer's suggested configuration: cheapest flight, first hotel, sample activities. */
@@ -97,7 +101,6 @@ export function costForBuild(data: TripData, optionId: OptionId, build: Build, p
   const option = data.dateOptions.find((o) => o.id === optionId)!;
   const quotes = quotesForOption(data, optionId);
   const quote = quotes.find((q) => q.id === build.flightId) ?? quotes[0] ?? null;
-  const familyCount = Math.max(1, data.families.length);
 
   // Flights (kids 2+ pay adult airfare) + checked bags
   const bagsCost = quote ? quote.bagFee * party.bags : 0;
@@ -107,8 +110,8 @@ export function costForBuild(data: TripData, optionId: OptionId, build: Build, p
   const preHotel = data.hotels.find((h) => h.id === build.preHotelId) ?? data.hotels[0];
   const postHotel = data.hotels.find((h) => h.id === build.postHotelId) ?? data.hotels[0];
   const hotel =
-    (preHotel ? hotelSegmentCost(preHotel, "pre", option.preNights, party, familyCount) : 0) +
-    (postHotel ? hotelSegmentCost(postHotel, "post", option.postNights, party, familyCount) : 0);
+    (preHotel ? hotelSegmentCost(preHotel, "pre", option.preNights, party) : 0) +
+    (postHotel ? hotelSegmentCost(postHotel, "post", option.postNights, party) : 0);
 
   // Activity tickets — adults + kids 10+ pay adult price; kids 3–9 pay child price
   let tickets = 0;
