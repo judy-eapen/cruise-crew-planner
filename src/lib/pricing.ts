@@ -25,7 +25,7 @@ export interface BuildCost {
   tickets: number;
   total: number;
   perPerson: number;
-  activityDays: number; // full = 1, half = 0.5
+  activityDays: number; // FULL free days only — travel-day halves don't count
   anyEstimate: boolean;
 }
 
@@ -134,8 +134,9 @@ export function costForBuild(data: TripData, optionId: OptionId, build: Build, p
   let anyEstimate = Boolean(quote?.estimate) || Boolean(preHotel?.estimate && option.preNights > 0) || Boolean(postHotel?.estimate && option.postNights > 0);
   let activityDays = 0;
   for (const slot of data.slots.filter((s) => s.optionId === optionId)) {
+    // Free days = FULL days only; arrival/departure half-days are travel days
+    // (still plannable below, but they don't count).
     if (slot.slotType === "full") activityDays += 1;
-    else if (slot.slotType === "half") activityDays += 0.5;
     if (slot.slotType === "travel") continue;
     const actId = build.activities[slot.date];
     if (!actId) continue;

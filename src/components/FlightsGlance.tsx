@@ -74,9 +74,7 @@ export default function FlightsGlance({
           const cheapest = quotes.length ? quoteCostForParty(quotes[0], party) : 0;
           const build = buildFor(o.id);
           const chosenId = build.flightId ?? quotes[0]?.id ?? null;
-          const freeDays = data.slots
-            .filter((s) => s.optionId === o.id)
-            .reduce((t, s) => t + (s.slotType === "full" ? 1 : s.slotType === "half" ? 0.5 : 0), 0);
+          const freeDays = data.slots.filter((s) => s.optionId === o.id && s.slotType === "full").length;
           const isActive = o.id === selectedOption;
           return (
             <div
