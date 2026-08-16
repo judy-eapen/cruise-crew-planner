@@ -65,7 +65,8 @@ create table if not exists activities (
   area text not null default 'orlando' check (area in ('orlando', 'port', 'daytrip')),
   star boolean not null default false,
   estimate boolean not null default true,
-  note text
+  note text,
+  date_prices jsonb not null default '{}'::jsonb
 );
 
 create table if not exists itinerary_slots (

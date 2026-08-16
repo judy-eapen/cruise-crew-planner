@@ -37,6 +37,22 @@ export function totalPeople(p: PartySize): number {
   return p.adults + p.kids39 + p.kids10plus;
 }
 
+/** Ticket prices for an activity on a specific date (Disney calendar pricing), falling back to base. */
+export function activityPrices(act: { adultPrice: number; childPrice: number; datePrices?: Record<string, { adult: number; child: number }> }, date?: string) {
+  const o = date ? act.datePrices?.[date] : undefined;
+  return { adult: o?.adult ?? act.adultPrice, child: o?.child ?? act.childPrice };
+}
+
+/** What a party pays for one activity on one date. */
+export function activityCostForParty(
+  act: { adultPrice: number; childPrice: number; datePrices?: Record<string, { adult: number; child: number }> },
+  party: PartySize,
+  date?: string
+): number {
+  const p = activityPrices(act, date);
+  return p.adult * (party.adults + party.kids10plus) + p.child * party.kids39;
+}
+
 export function quotesForOption(data: TripData, optionId: OptionId): FlightQuote[] {
   return data.flights
     .filter((f) => f.optionId === optionId)
@@ -125,7 +141,7 @@ export function costForBuild(data: TripData, optionId: OptionId, build: Build, p
     if (!actId) continue;
     const act = data.activities.find((a) => a.id === actId);
     if (!act) continue;
-    tickets += act.adultPrice * (party.adults + party.kids10plus) + act.childPrice * party.kids39;
+    tickets += activityCostForParty(act, party, slot.date);
     if (act.estimate && act.adultPrice + act.childPrice > 0) anyEstimate = true;
   }
 

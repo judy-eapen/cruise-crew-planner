@@ -261,12 +261,21 @@ export async function POST(req: Request) {
       }
 
       case "update-activity": {
-        const { id, adultPrice, childPrice, ageFit, area } = payload;
+        const { id, adultPrice, childPrice, ageFit, area, datePrices } = payload;
+        const cleanDates: Record<string, { adult: number; child: number }> = {};
+        if (datePrices && typeof datePrices === "object") {
+          for (const [d, p] of Object.entries(datePrices as Record<string, { adult: unknown; child: unknown }>)) {
+            const adult = Number(p?.adult);
+            const child = Number(p?.child);
+            if (/^\d{4}-\d{2}-\d{2}$/.test(d) && adult > 0) cleanDates[d] = { adult, child: child > 0 ? child : adult };
+          }
+        }
         const { error } = await supabase
           .from("activities")
           .update({
             adult_price: Number(adultPrice),
             child_price: Number(childPrice),
+            date_prices: cleanDates,
             age_fit: ["all", "younger", "older", "check"].includes(ageFit) ? ageFit : "all",
             area: ["orlando", "port", "daytrip"].includes(area) ? area : "orlando",
             estimate: false,

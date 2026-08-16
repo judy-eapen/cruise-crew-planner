@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Activity, Build, Hotel, OptionId, TripData } from "@/lib/types";
 import {
+  activityCostForParty,
   costForBuild,
   fmt,
   hotelSegmentCost,
@@ -64,8 +65,7 @@ export default function BuilderSection({
   const days = isoRange(option.departDate, option.returnDate);
   const people = totalPeople(party);
 
-  const ticketCost = (a: Activity) =>
-    a.adultPrice * (party.adults + party.kids10plus) + a.childPrice * party.kids39;
+  const ticketCost = (a: Activity, date?: string) => activityCostForParty(a, party, date);
 
   const tableActivities = useMemo(() => {
     let list = data.activities.slice();
@@ -298,7 +298,7 @@ export default function BuilderSection({
         {freeSlots.map((s) => {
           const eligible = data.activities
             .filter((a) => (s.slotType === "half" ? a.type === "half" : true))
-            .sort((a, b) => ticketCost(a) - ticketCost(b));
+            .sort((a, b) => ticketCost(a, s.date) - ticketCost(b, s.date));
           const chosen = data.activities.find((a) => a.id === build.activities[s.date]);
           return (
             <div key={s.date} className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -316,7 +316,7 @@ export default function BuilderSection({
                 {eligible.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.star ? "⭐ " : ""}
-                    {a.name} {ticketCost(a) > 0 ? `(${fmt(ticketCost(a))})` : "(free)"}
+                    {a.name} {ticketCost(a, s.date) > 0 ? `(${fmt(ticketCost(a, s.date))})` : "(free)"}
                   </option>
                 ))}
               </select>
@@ -381,7 +381,10 @@ export default function BuilderSection({
                   <td className="text-slate-300">{a.type === "full" ? "Full" : "Half"}</td>
                   <td className="text-slate-300">{AGE_LABEL[a.ageFit]}</td>
                   <td className="text-slate-300">{AREA_LABEL[a.area]}</td>
-                  <td className="text-right tabular-nums text-slate-300">{a.adultPrice ? `${a.estimate ? "~" : ""}$${a.adultPrice}` : "Free"}</td>
+                  <td className="text-right tabular-nums text-slate-300">
+                    {a.adultPrice ? `${a.estimate ? "~" : ""}$${a.adultPrice}` : "Free"}
+                    {a.datePrices && Object.keys(a.datePrices).length > 0 && <span className="text-amber-300" title="Price varies by date">*</span>}
+                  </td>
                   <td className="text-right tabular-nums text-slate-300">{a.childPrice ? `${a.estimate ? "~" : ""}$${a.childPrice}` : "Free"}</td>
                   <td className="text-right font-semibold tabular-nums text-amber-200">{ticketCost(a) ? fmt(ticketCost(a)) : "Free"}</td>
                 </tr>

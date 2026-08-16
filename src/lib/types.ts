@@ -70,6 +70,8 @@ export interface Activity {
   star: boolean;
   estimate: boolean;
   note?: string;
+  /** Optional per-date prices (Disney-style calendar pricing). Key = ISO date; falls back to adultPrice/childPrice. */
+  datePrices?: Record<string, { adult: number; child: number }>;
 }
 
 export type SlotType = "full" | "half" | "travel";

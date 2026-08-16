@@ -568,8 +568,20 @@ export default function AdminPage() {
           <div className="mt-3 space-y-1.5">
             {data?.activities.map((a) => {
               const k = (field: string) => draftKey("a", a.id, field);
+              const ACT_DATES = ["2026-10-31", "2026-11-01", "2026-11-06", "2026-11-07", "2026-11-08"] as const;
+              const dp = (d: string, kind: "ad" | "ch") => draft(k(`dp|${d}|${kind}`), a.datePrices?.[d]?.[kind === "ad" ? "adult" : "child"] ?? "");
+              const datePricesPayload = () => {
+                const out: Record<string, { adult: number; child: number }> = {};
+                for (const d of ACT_DATES) {
+                  const ad = Number(dp(d, "ad"));
+                  const ch = Number(dp(d, "ch"));
+                  if (ad > 0) out[d] = { adult: ad, child: ch > 0 ? ch : ad };
+                }
+                return out;
+              };
               return (
-                <div key={a.id} className="flex flex-wrap items-center gap-2 text-sm">
+                <div key={a.id}>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="min-w-52 flex-1 text-slate-200">
                     {a.star ? "⭐ " : ""}
                     {a.name}
@@ -601,6 +613,7 @@ export default function AdminPage() {
                             childPrice: Number(draft(k("cp"), a.childPrice)),
                             ageFit: draft(k("age"), a.ageFit),
                             area: draft(k("area"), a.area),
+                            datePrices: datePricesPayload(),
                           },
                         },
                         `Saved ${a.name} ✓`
@@ -610,6 +623,26 @@ export default function AdminPage() {
                   >
                     Save
                   </button>
+                </div>
+                {a.adultPrice + a.childPrice > 0 && (
+                  <details className="ml-4 mt-1">
+                    <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-300">
+                      📅 per-date prices{a.datePrices && Object.keys(a.datePrices).length > 0 ? ` (${Object.keys(a.datePrices).length} set)` : " (optional — for Disney-style calendar pricing)"}
+                    </summary>
+                    <div className="mt-1.5 flex flex-wrap gap-3">
+                      {ACT_DATES.map((d) => (
+                        <div key={d} className="flex items-center gap-1 text-xs text-slate-400">
+                          <span className="w-9">{d.slice(5).replace("-", "/")}</span>
+                          <span>A$</span>
+                          <input className="w-14 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-right text-white" value={dp(d, "ad")} onChange={(e) => setDraft(k(`dp|${d}|ad`), e.target.value)} />
+                          <span>K$</span>
+                          <input className="w-14 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-right text-white" value={dp(d, "ch")} onChange={(e) => setDraft(k(`dp|${d}|ch`), e.target.value)} />
+                        </div>
+                      ))}
+                      <span className="text-xs text-slate-600">blank = use base price · Save on the row above applies these</span>
+                    </div>
+                  </details>
+                )}
                 </div>
               );
             })}
