@@ -302,8 +302,8 @@ export default function AdminPage() {
             </div>
             <p className="mt-1.5 text-xs text-slate-500">
               ✓ always same-airport round trips (BWI→MCO→BWI etc.) · top 4 + cheapest Delta per option · bags
-              assumed $50/each round trip on every airline · full refresh ≈ 40 of your 100 free monthly searches —
-              per-option ↻ (~7 each) stretches the quota · ✍️ manual quotes are never touched
+              assumed $50/each round trip on every airline · full refresh ≈ 40–48 searches, per-option ↻ ≈ 8 (free
+              tier = 250/mo → ~5 full refreshes) · ✍️ manual quotes are never touched
             </p>
             {fareStatus && (
               <p className="mt-1.5 rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-cyan-100">{fareStatus}</p>
