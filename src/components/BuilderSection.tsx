@@ -198,12 +198,12 @@ export default function BuilderSection({
     if (!list.length) return null;
     const minCost = costOf(list[0]);
     return (
-      <>
-        <p className="mt-5 text-sm font-semibold text-slate-300">{header}</p>
+      <div>
+        <p className="text-sm font-semibold text-slate-300">{header}</p>
         <div className="mt-2 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
           {list.map((h) => stayRow(h, segment, nights, minCost))}
         </div>
-      </>
+      </div>
     );
   };
 
@@ -334,8 +334,12 @@ export default function BuilderSection({
           stay · 💰 = cheapest · 🏡 = one Airbnb booking, cost split across families · tap a stay to pick it
         </p>
       )}
-      {segDates.pre && segmentBlock("pre", option.preNights, `🌙 Before the cruise · ${segDates.pre}`)}
-      {segDates.post && segmentBlock("post", option.postNights, `🌅 After the cruise · ${segDates.post}`)}
+      {(segDates.pre || segDates.post) && (
+        <div className="mt-4 grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+          {segDates.pre && segmentBlock("pre", option.preNights, `🌙 Before the cruise · ${segDates.pre}`)}
+          {segDates.post && segmentBlock("post", option.postNights, `🌅 After the cruise · ${segDates.post}`)}
+        </div>
+      )}
       {!segDates.pre && !segDates.post && <p className="mt-2 text-sm text-slate-400">No hotel nights for this option.</p>}
 
       {/* 3 · Activities per free day */}
