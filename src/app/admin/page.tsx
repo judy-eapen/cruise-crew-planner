@@ -292,7 +292,8 @@ export default function AdminPage() {
             <input className={numCls} value={newQuote.bagFee} onChange={(e) => setNewQuote({ ...newQuote, bagFee: e.target.value })} />
             <button
               onClick={() => {
-                if (!newQuote.airline.trim() || !newQuote.fare) return;
+                if (!newQuote.airline.trim()) { setStatus("⚠ Enter an airline first"); return; }
+                if (!newQuote.fare) { setStatus("⚠ Enter the fare per person"); return; }
                 run(
                   {
                     action: "add-quote",
@@ -433,7 +434,8 @@ export default function AdminPage() {
               <input placeholder="🔗 booking link" className={`${txtCls} w-44`} value={newHotel.link} onChange={(e) => setNewHotel({ ...newHotel, link: e.target.value })} />
               <button
                 onClick={() => {
-                  if (!newHotel.name || !newHotel.sp2) return;
+                  if (!newHotel.name) { setStatus("⚠ Enter a hotel name first"); return; }
+                  if (!newHotel.sp2) { setStatus("⚠ Enter at least the 10/31→11/2 stay total"); return; }
                   run(
                     {
                       action: "upsert-hotel",
