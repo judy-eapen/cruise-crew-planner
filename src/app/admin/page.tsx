@@ -347,8 +347,8 @@ export default function AdminPage() {
                     </label>
                   ))}
                   <select className={selCls} value={draft(k("mode"), h.priceMode)} onChange={(e) => setDraft(k("mode"), e.target.value)}>
-                    <option value="per_room_night">/night per room</option>
-                    <option value="per_property_night_split">/night whole place (split)</option>
+                    <option value="per_room_night">stay total · per room</option>
+                    <option value="per_property_night_split">stay total · whole place, split 7 ways</option>
                   </select>
                   <select className={selCls} value={draft(k("stars"), h.stars)} onChange={(e) => setDraft(k("stars"), e.target.value)}>
                     {[2, 3, 4, 5].map((s) => (
@@ -422,8 +422,8 @@ export default function AdminPage() {
                 </label>
               ))}
               <select className={selCls} value={newHotel.mode} onChange={(e) => setNewHotel({ ...newHotel, mode: e.target.value })}>
-                <option value="per_room_night">/night per room</option>
-                <option value="per_property_night_split">/night whole place (split)</option>
+                <option value="per_room_night">stay total · per room</option>
+                <option value="per_property_night_split">stay total · whole place, split 7 ways</option>
               </select>
               <select className={selCls} value={newHotel.type} onChange={(e) => setNewHotel({ ...newHotel, type: e.target.value })}>
                 <option value="hotel">🏨 hotel</option>
