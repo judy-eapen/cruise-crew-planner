@@ -74,12 +74,13 @@ const fmtDuration = (mins: number | undefined): string =>
 const normalizeAirline = (name: string | undefined): string =>
   (name ?? "Unknown").replace(/\s+Air\s*Lines?$/i, "").replace(/\s+Airways$/i, "").trim();
 
+// IATA airline codes are exactly 2 characters; words like "ALL"/"ANY" mean no filter.
 const sanitizeAirlineCodes = (raw: string): string =>
   raw
     .toUpperCase()
     .split(",")
     .map((c) => c.trim())
-    .filter((c) => /^[A-Z0-9]{2,3}$/.test(c))
+    .filter((c) => /^[A-Z0-9]{2}$/.test(c))
     .join(",");
 
 const usableItineraries = (json: any, f: FareFilters): any[] =>

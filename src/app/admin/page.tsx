@@ -100,13 +100,22 @@ export default function AdminPage() {
 
   // Live fares: one API call per option (sequential) so progress is visible and
   // no single request outlives Vercel's window. Manual quotes are never touched.
+  // "all"/"any"/junk → no airline filter; only real 2-char IATA codes survive.
+  const cleanAirlines = () =>
+    fareFilters.airlines
+      .toUpperCase()
+      .split(",")
+      .map((c) => c.trim())
+      .filter((c) => /^[A-Z0-9]{2}$/.test(c))
+      .join(",");
+
   const fareFilterDesc = () =>
     [
       fareFilters.out.trim() ? `out ${fareFilters.out.trim()}h` : "out any",
       fareFilters.back.trim() ? `back ${fareFilters.back.trim()}h` : "back any",
       fareFilters.nonstop ? "nonstop" : "stops ok",
       fareFilters.noMax8 ? "no MAX 8" : "MAX 8 ok",
-      fareFilters.airlines.trim() ? `only ${fareFilters.airlines.trim().toUpperCase()}` : "all airlines",
+      cleanAirlines() ? `only ${cleanAirlines()}` : "all airlines",
     ].join(" · ");
 
   const refreshFares = async (optionIds: string[]) => {
@@ -125,7 +134,7 @@ export default function AdminPage() {
             returnTimes: fareFilters.back.trim(),
             nonstopOnly: fareFilters.nonstop,
             excludeMax8: fareFilters.noMax8,
-            includeAirlines: fareFilters.airlines.trim(),
+            includeAirlines: cleanAirlines(),
           },
         });
         totalAdded += r.added ?? 0;
