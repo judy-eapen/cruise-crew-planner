@@ -22,8 +22,6 @@ export default function GroupTab({
     const min = Math.min(...costs.map((c) => c.total));
     return { family: f, costs, min };
   });
-  const groupTotals = data.dateOptions.map((_, i) => rows.reduce((sum, r) => sum + r.costs[i].total, 0));
-  const minGroup = Math.min(...groupTotals);
 
   return (
     <div>
@@ -69,19 +67,6 @@ export default function GroupTab({
                 ))}
               </tr>
             ))}
-            <tr className="border-t-2 border-white/20">
-              <td className="py-3 pr-2 font-bold text-white">All {rows.length} families</td>
-              {groupTotals.map((t, i) => (
-                <td
-                  key={data.dateOptions[i].id}
-                  className={`px-2 py-3 text-right font-black tabular-nums ${
-                    t === minGroup ? "rounded-lg bg-amber-300/20 text-amber-200" : "text-white"
-                  }`}
-                >
-                  ~{fmt(t)}
-                </td>
-              ))}
-            </tr>
           </tbody>
         </table>
       </div>
