@@ -308,6 +308,7 @@ export default function Planner() {
               setSelectedOption(id);
               setHasSelection(true);
             }}
+            onClearSelection={() => setHasSelection(false)}
           />
         </section>
 

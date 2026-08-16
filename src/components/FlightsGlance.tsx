@@ -53,6 +53,7 @@ export default function FlightsGlance({
   buildFor,
   onPickQuote,
   onSelectOption,
+  onClearSelection,
 }: {
   data: TripData;
   party: PartySize;
@@ -62,11 +63,22 @@ export default function FlightsGlance({
   buildFor: (id: OptionId) => Build;
   onPickQuote: (optionId: OptionId, quoteId: number) => void;
   onSelectOption: (id: OptionId) => void;
+  onClearSelection: () => void;
 }) {
   const [mathFor, setMathFor] = useState<number | null>(null);
   return (
     <div>
-      <h3 className="font-display text-xl tracking-wide text-white">✈️ Flights at a glance — all six options</h3>
+      <div className="flex flex-wrap items-center gap-3">
+        <h3 className="font-display text-xl tracking-wide text-white">✈️ Flights at a glance — all six options</h3>
+        {hasSelection && (
+          <button
+            onClick={onClearSelection}
+            className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-cyan-300 transition hover:bg-white/20"
+          >
+            ✨ Show all in color again
+          </button>
+        )}
+      </div>
       <p className="text-xs text-slate-400">
         Tap an option to make it your pick · tap a flight to choose it · 💰 = cheapest for that option
       </p>
