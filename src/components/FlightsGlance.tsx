@@ -64,7 +64,7 @@ export default function FlightsGlance({
     <div>
       <h3 className="font-display text-xl tracking-wide text-white">✈️ Flights at a glance — all six options</h3>
       <p className="text-xs text-slate-400">
-        Prices are what {familyLabel} would pay · 💰 = cheapest for that option · tap a flight to use it in your build
+        Tap an option to make it your pick · tap a flight to choose it · prices are what {familyLabel} would pay · 💰 = cheapest for that option
       </p>
       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {data.dateOptions.map((o) => {
@@ -85,7 +85,16 @@ export default function FlightsGlance({
             >
               <button onClick={() => onSelectOption(o.id)} className="w-full text-left">
                 <span className="flex items-baseline justify-between">
-                  <span className={`text-lg font-bold ${isActive ? "text-amber-200" : "text-white"}`}>Option {o.id}</span>
+                  <span className={`flex items-center gap-2 text-lg font-bold ${isActive ? "text-amber-200" : "text-white"}`}>
+                    <span
+                      className={`inline-flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                        isActive ? "border-amber-300 bg-amber-300" : "border-slate-500"
+                      }`}
+                    >
+                      {isActive && <span className="h-1.5 w-1.5 rounded-full bg-indigo-950" />}
+                    </span>
+                    Option {o.id}
+                  </span>
                   <span className="text-xs text-slate-400">
                     {freeDays} free day{freeDays !== 1 ? "s" : ""}
                   </span>

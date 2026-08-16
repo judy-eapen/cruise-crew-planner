@@ -9,9 +9,6 @@ import {
   hotelSegmentCost,
   hotelsForSegment,
   segmentStay,
-  quoteCostForParty,
-  quotesForOption,
-  totalPeople,
   type PartySize,
 } from "@/lib/pricing";
 import { isoRange, shortDate, shortDay } from "@/lib/dates";
@@ -60,10 +57,8 @@ export default function BuilderSection({
   const option = data.dateOptions.find((o) => o.id === optionId)!;
   const slots = data.slots.filter((s) => s.optionId === optionId);
   const freeSlots = slots.filter((s) => s.slotType !== "travel");
-  const quotes = quotesForOption(data, optionId);
   const cost = costForBuild(data, optionId, build, party);
   const days = isoRange(option.departDate, option.returnDate);
-  const people = totalPeople(party);
 
   const ticketCost = (a: Activity, date?: string) => activityCostForParty(a, party, date);
 
@@ -239,45 +234,25 @@ export default function BuilderSection({
       </div>
       <p className="text-xs text-slate-400">✈️ travel · 🚢 cruise (fixed) · 🎢 full free day · 🌤 half free day</p>
 
-      {/* 1 · Flights */}
-      <h3 className="font-display mt-8 text-xl tracking-wide text-white">1 · Pick your flight</h3>
-      <p className="text-xs text-slate-400">
-        Nonstop flights only · sorted by what {familyLabel} would pay ({people} people, {party.bags} checked bag{party.bags !== 1 ? "s" : ""}).
+      {/* Selected flight (picked in the glance grid above) */}
+      <p className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-300">
+        ✈️ Your flight:{" "}
+        {cost.quote ? (
+          <>
+            <span className="font-bold text-amber-200">
+              {cost.quote.airline} · {cost.quote.origin} → MCO
+            </span>{" "}
+            · out {cost.quote.outDepart} → {cost.quote.outArrive} · back {cost.quote.retDepart} → {cost.quote.retArrive} ·{" "}
+            <span className="font-bold text-white">{fmt(cost.flights)}</span> for {familyLabel}
+          </>
+        ) : (
+          "none yet"
+        )}{" "}
+        <span className="text-xs text-slate-500">— change it in the grid above</span>
       </p>
-      <div className="mt-3 grid grid-cols-1 gap-2">
-        {quotes
-          .slice()
-          .sort((a, b) => quoteCostForParty(a, party) - quoteCostForParty(b, party))
-          .map((q) => {
-            const selected = (cost.quote?.id ?? null) === q.id;
-            const familyFlightCost = quoteCostForParty(q, party);
-            return (
-              <button
-                key={q.id}
-                onClick={() => onUpdateBuild({ ...build, flightId: q.id })}
-                className={`flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border p-3.5 text-left transition ${
-                  selected ? "border-amber-300 bg-amber-300/10" : "border-white/10 bg-white/5 hover:border-white/30"
-                }`}
-              >
-                <span className={`font-bold ${selected ? "text-amber-200" : "text-white"}`}>
-                  ✈️ {q.origin} → MCO · {q.airline}
-                </span>
-                <span className="text-xs text-slate-400">
-                  out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive} · {q.duration}
-                </span>
-                <span className="text-sm text-slate-300">
-                  {q.estimate && "~"}
-                  {fmt(q.farePerPerson)}/person
-                  {q.bagFee > 0 ? ` + ${fmt(q.bagFee)}/bag` : " · bags included"}
-                </span>
-                <span className="ml-auto text-sm font-bold text-amber-200">{fmt(familyFlightCost)} for {familyLabel}</span>
-              </button>
-            );
-          })}
-      </div>
 
-      {/* 2 · Hotels, two segments */}
-      <h3 className="font-display mt-8 text-xl tracking-wide text-white">2 · Pick your hotels</h3>
+      {/* 1 · Hotels, two segments */}
+      <h3 className="font-display mt-8 text-xl tracking-wide text-white">1 · Pick your hotels</h3>
       {segDates.pre && (
         <>
           <p className="mt-2 text-sm font-semibold text-slate-300">🌙 Before the cruise · {segDates.pre}</p>
@@ -297,7 +272,7 @@ export default function BuilderSection({
       {!segDates.pre && !segDates.post && <p className="mt-2 text-sm text-slate-400">No hotel nights for this option.</p>}
 
       {/* 3 · Activities per free day */}
-      <h3 className="font-display mt-8 text-xl tracking-wide text-white">3 · Fill your free days</h3>
+      <h3 className="font-display mt-8 text-xl tracking-wide text-white">2 · Fill your free days</h3>
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {freeSlots.map((s) => {
           const eligible = data.activities
