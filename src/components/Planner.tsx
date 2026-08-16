@@ -381,10 +381,11 @@ export default function Planner() {
           />
           <details className="mt-8">
             <summary className="cursor-pointer text-sm font-semibold text-slate-400 hover:text-slate-200">
-              👨‍👩‍👧‍👦 Organizer view: every family × every option (suggested plan)
+              👨‍👩‍👧‍👦 Organizer view: every family × every option (
+              {Object.keys(builds).length > 0 ? "your picks" : "suggested plan"})
             </summary>
             <div className="mt-3">
-              <GroupTab data={data} />
+              <GroupTab data={data} buildFor={effectiveBuild} anyCustomized={Object.keys(builds).length > 0} />
             </div>
           </details>
         </section>
@@ -397,8 +398,8 @@ export default function Planner() {
         <p className="border-t border-white/10 pt-4 text-xs text-slate-400">
           Prices checked {priceChecked} · ~ marks estimated prices pending confirmation · park child pricing =
           ages 3–9; kids 10+ pay adult prices; all kids pay adult airfare · checked bags assumed $50 each
-          (round trip) unless a flight quote says otherwise · only nonstop flights were searched · group table shows the suggested plan for
-          consistency
+          (round trip) unless a flight quote says otherwise · only nonstop flights were searched · the crew table applies your picks (or the
+          suggested plan) to every family&apos;s size
         </p>
       </main>
     </div>
