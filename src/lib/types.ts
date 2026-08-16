@@ -48,6 +48,10 @@ export interface Hotel {
   amenities: string;
   link: string; // booking-site URL — families can click through for photos/details
   sharedFamilies: number; // split-mode only: how many families share this property's cost
+  bedrooms: number; // 0 = not stated (hotels can skip capacity fields)
+  beds: number;
+  baths: number;
+  sleeps: number; // max occupancy
   estimate: boolean;
 }
 

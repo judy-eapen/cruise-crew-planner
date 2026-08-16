@@ -46,6 +46,10 @@ create table if not exists hotels (
   amenities text not null default '',
   link text not null default '',
   shared_families int not null default 7,
+  bedrooms int not null default 0,
+  beds int not null default 0,
+  baths numeric not null default 0,
+  sleeps int not null default 0,
   estimate boolean not null default true
 );
 

@@ -123,6 +123,17 @@ export default function BuilderSection({
           {h.pool && " · 🏊 pool"}
           {h.breakfastIncluded && " · 🍳 breakfast"}
         </p>
+        {(h.sleeps > 0 || h.bedrooms > 0) && (
+          <p className="mt-0.5 text-xs text-slate-300">
+            {h.bedrooms > 0 && `🛏 ${h.bedrooms} BR`}
+            {h.beds > 0 && ` · ${h.beds} beds`}
+            {h.baths > 0 && ` · 🛁 ${h.baths} bath${h.baths !== 1 ? "s" : ""}`}
+            {h.sleeps > 0 && ` · sleeps ${h.sleeps}`}
+            {h.priceMode === "per_property_night_split" && h.sleeps > 0 && h.sleeps < h.sharedFamilies * 4 && (
+              <span className="text-pink-300"> · ⚠ tight for {h.sharedFamilies} families (~{h.sharedFamilies * 4} people)</span>
+            )}
+          </p>
+        )}
         {h.amenities && <p className="mt-0.5 text-xs text-slate-500">{h.amenities}</p>}
         {h.link && (
           <span

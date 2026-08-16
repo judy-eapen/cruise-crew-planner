@@ -90,6 +90,10 @@ export async function POST(req: Request) {
               amenities: h.amenities,
               link: h.link,
               shared_families: h.sharedFamilies,
+              bedrooms: h.bedrooms,
+              beds: h.beds,
+              baths: h.baths,
+              sleeps: h.sleeps,
               estimate: h.estimate,
             }))
           )
@@ -220,7 +224,7 @@ export async function POST(req: Request) {
       }
 
       case "upsert-hotel": {
-        const { id, name, stayPre2, stayPre1, stayPost2, stayPost1, priceMode, stars, area, type, pool, breakfastIncluded, amenities, link, sharedFamilies } = payload;
+        const { id, name, stayPre2, stayPre1, stayPost2, stayPost1, priceMode, stars, area, type, pool, breakfastIncluded, amenities, link, sharedFamilies, bedrooms, beds, baths, sleeps } = payload;
         const hotelId = id || `H${Date.now().toString(36)}`;
         const { error } = await supabase.from("hotels").upsert({
           id: hotelId,
@@ -238,6 +242,10 @@ export async function POST(req: Request) {
           amenities: String(amenities ?? "").slice(0, 200),
           link: String(link ?? "").slice(0, 300),
           shared_families: Math.max(1, Number(sharedFamilies ?? 7)),
+          bedrooms: Number(bedrooms ?? 0),
+          beds: Number(beds ?? 0),
+          baths: Number(baths ?? 0),
+          sleeps: Number(sleeps ?? 0),
           estimate: false,
         });
         if (error) throw new Error(error.message);
