@@ -31,6 +31,12 @@ export default function PicksCompare({
     return { o, build, cost, preHotel, postHotel, acts };
   });
   const minTotal = Math.min(...rows.map((r) => r.cost.total));
+  // Price ranking (1 = cheapest) — cards stay in A-F order, the badge carries the rank.
+  const rankOf = new Map(
+    [...rows].sort((a, b) => a.cost.total - b.cost.total).map((r, i) => [r.o.id, i + 1])
+  );
+  const rankBadge = (rank: number) =>
+    rank === 1 ? "🥇 best price" : rank === 2 ? "🥈 2nd" : rank === 3 ? "🥉 3rd" : `#${rank} on price`;
 
   return (
     <div>
@@ -38,8 +44,8 @@ export default function PicksCompare({
         Your six trips, side by side — <span className="text-amber-300">{familyLabel}</span>
       </h2>
       <p className="mt-1 text-sm text-slate-400">
-        Each card is YOUR build of that option — the flight, hotels, and activities you picked above. 💰 marks
-        your cheapest. Tap “edit” to change a build.
+        Each card is YOUR build of that option — the flight, hotels, and activities you picked above. Badges rank
+        them by price (🥇 = cheapest). Tap “edit” to change a build.
       </p>
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {rows.map(({ o, cost, preHotel, postHotel, acts }) => {
@@ -51,8 +57,21 @@ export default function PicksCompare({
                 cheapest ? "border-emerald-300/50 bg-emerald-400/[0.05]" : "border-white/10 bg-white/5"
               }`}
             >
-              <div className="flex items-baseline justify-between">
-                <span className="text-lg font-bold text-white">Option {o.id}</span>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="flex items-center gap-2 text-lg font-bold text-white">
+                  Option {o.id}
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      rankOf.get(o.id) === 1
+                        ? "bg-emerald-400/20 text-emerald-300"
+                        : (rankOf.get(o.id) ?? 9) <= 3
+                          ? "bg-amber-300/15 text-amber-200"
+                          : "bg-white/10 text-slate-400"
+                    }`}
+                  >
+                    {rankBadge(rankOf.get(o.id) ?? 0)}
+                  </span>
+                </span>
                 <span className="text-xs text-slate-400">
                   {shortDate(o.departDate)} → {shortDate(o.returnDate)}
                 </span>
