@@ -388,7 +388,14 @@ export default function AdminPage() {
                     ))}
                   </select>
                   <input className={`${txtCls} w-40`} placeholder="area" value={draft(k("area"), h.area)} onChange={(e) => setDraft(k("area"), e.target.value)} />
-                  <select className={selCls} value={draft(k("type"), h.type)} onChange={(e) => setDraft(k("type"), e.target.value)}>
+                  <select
+                    className={selCls}
+                    value={draft(k("type"), h.type)}
+                    onChange={(e) => {
+                      setDraft(k("type"), e.target.value);
+                      setDraft(k("mode"), e.target.value === "airbnb" ? "per_property_night_split" : "per_room_night");
+                    }}
+                  >
                     <option value="hotel">🏨 hotel</option>
                     <option value="airbnb">🏡 airbnb</option>
                   </select>
@@ -496,7 +503,17 @@ export default function AdminPage() {
                   ))}
                 </>
               )}
-              <select className={selCls} value={newHotel.type} onChange={(e) => setNewHotel({ ...newHotel, type: e.target.value })}>
+              <select
+                className={selCls}
+                value={newHotel.type}
+                onChange={(e) =>
+                  setNewHotel({
+                    ...newHotel,
+                    type: e.target.value,
+                    mode: e.target.value === "airbnb" ? "per_property_night_split" : "per_room_night",
+                  })
+                }
+              >
                 <option value="hotel">🏨 hotel</option>
                 <option value="airbnb">🏡 airbnb</option>
               </select>
