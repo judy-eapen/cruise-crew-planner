@@ -112,7 +112,7 @@ export async function fetchQuotesForOption(
   departDate: string,
   returnDate: string,
   filters: FareFilters,
-  topN = 4
+  topN = 3
 ): Promise<OptionRefreshResult> {
   const warnings: string[] = [];
   let searches = 0;

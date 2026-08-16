@@ -301,9 +301,9 @@ export default function AdminPage() {
               </button>
             </div>
             <p className="mt-1.5 text-xs text-slate-500">
-              ✓ always same-airport round trips (BWI→MCO→BWI etc.) · top 4 + cheapest Delta per option · bags
-              assumed $50/each round trip on every airline · full refresh ≈ 40–48 searches, per-option ↻ ≈ 8 (free
-              tier = 250/mo → ~5 full refreshes) · ✍️ manual quotes are never touched
+              ✓ always same-airport round trips (BWI→MCO→BWI etc.) · top 3 + cheapest Delta per option · bags
+              assumed $50/each round trip on every airline · full refresh ≈ 36–42 searches, per-option ↻ ≈ 7 (free
+              tier = 250/mo → ~6 full refreshes) · ✍️ manual quotes are never touched
             </p>
             {fareStatus && (
               <p className="mt-1.5 rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-cyan-100">{fareStatus}</p>
