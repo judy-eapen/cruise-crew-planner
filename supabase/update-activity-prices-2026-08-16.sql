@@ -65,10 +65,13 @@ update activities set
   estimate = true
 where id = 'SW';
 
--- ── LEGOLAND ─ online date-based, everyone 2+ same price (official floor $69 online,
---    $129 gate). Halloween-weekend date price unconfirmed → estimate.
+-- ── LEGOLAND ─ online date-based (official adult floor $69 online, $129 gate).
+--    Kids 2-12 from $39 online with >=1 full-price adult ticket (every family qualifies;
+--    valid through Dec 31 2026, limited-availability dates). Halloween-weekend date
+--    prices unconfirmed → estimate. Our model charges kids 10+ the adult price
+--    (slight overestimate — the $39 deal actually covers through age 12).
 update activities set
-  adult_price = 89, child_price = 89, date_prices = '{}'::jsonb,
+  adult_price = 89, child_price = 39, date_prices = '{}'::jsonb,
   ticket_link = 'https://www.legoland.com/florida/tickets-passes/tickets/',
   estimate = true
 where id = 'LEGO';
