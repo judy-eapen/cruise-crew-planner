@@ -605,6 +605,7 @@ export default function AdminPage() {
                     <option value="port">Near port</option>
                     <option value="daytrip">Day trip</option>
                   </select>
+                  <input className={`${txtCls} w-44`} placeholder="🎟 ticket link (https://…)" value={draft(k("link"), a.ticketLink)} onChange={(e) => setDraft(k("link"), e.target.value)} />
                   <button
                     onClick={() =>
                       run(
@@ -616,6 +617,7 @@ export default function AdminPage() {
                             childPrice: Number(draft(k("cp"), a.childPrice)),
                             ageFit: draft(k("age"), a.ageFit),
                             area: draft(k("area"), a.area),
+                            ticketLink: draft(k("link"), a.ticketLink),
                             datePrices: datePricesPayload(),
                           },
                         },

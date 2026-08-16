@@ -336,6 +336,20 @@ export default function BuilderSection({
                 <p className="mt-1.5 text-xs text-slate-400">
                   {AGE_LABEL[chosen.ageFit]} · {AREA_LABEL[chosen.area]}
                   {chosen.note ? ` · ${chosen.note}` : ""}
+                  {chosen.ticketLink && (
+                    <>
+                      {" · "}
+                      <a
+                        href={chosen.ticketLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
+                      >
+                        Tickets ↗
+                      </a>
+                    </>
+                  )}
                 </p>
               )}
             </div>
@@ -388,6 +402,17 @@ export default function BuilderSection({
                   <td className="py-2 text-slate-100">
                     {a.star ? "⭐ " : ""}
                     {a.name}
+                    {a.ticketLink && (
+                      <a
+                        href={a.ticketLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="ml-2 text-xs font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
+                      >
+                        Tickets ↗
+                      </a>
+                    )}
                     {a.note && <span className="block text-xs text-slate-500">{a.note}</span>}
                   </td>
                   <td className="text-slate-300">{a.type === "full" ? "Full" : "Half"}</td>

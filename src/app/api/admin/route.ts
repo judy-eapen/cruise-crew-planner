@@ -118,6 +118,7 @@ export async function POST(req: Request) {
               star: a.star,
               estimate: a.estimate,
               note: a.note ?? null,
+              ticket_link: a.ticketLink ?? "",
             }))
           )
         );
@@ -266,7 +267,7 @@ export async function POST(req: Request) {
       }
 
       case "update-activity": {
-        const { id, adultPrice, childPrice, ageFit, area, datePrices } = payload;
+        const { id, adultPrice, childPrice, ageFit, area, datePrices, ticketLink } = payload;
         const cleanDates: Record<string, { adult: number; child: number }> = {};
         if (datePrices && typeof datePrices === "object") {
           for (const [d, p] of Object.entries(datePrices as Record<string, { adult: unknown; child: unknown }>)) {
@@ -283,6 +284,7 @@ export async function POST(req: Request) {
             date_prices: cleanDates,
             age_fit: ["all", "younger", "older", "check"].includes(ageFit) ? ageFit : "all",
             area: ["orlando", "port", "daytrip"].includes(area) ? area : "orlando",
+            ticket_link: String(ticketLink ?? "").slice(0, 300),
             estimate: false,
           })
           .eq("id", id);

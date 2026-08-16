@@ -70,6 +70,7 @@ export interface Activity {
   star: boolean;
   estimate: boolean;
   note?: string;
+  ticketLink: string; // official ticket-purchase page URL ("" = none)
   /** Optional per-date prices (Disney-style calendar pricing). Key = ISO date; falls back to adultPrice/childPrice. */
   datePrices?: Record<string, { adult: number; child: number }>;
 }

@@ -65,7 +65,8 @@ const HOTELS: Hotel[] = [
   { id: "H3", name: "Disney Pop Century (on-property)", stayPre2: 520, stayPre1: 260, stayPost2: 520, stayPost1: 260, priceMode: "per_room_night", stars: 3, area: "Disney property", type: "hotel", pool: true, breakfastIncluded: false, amenities: "Early park entry", link: "", sharedFamilies: 7, bedrooms: 0, beds: 0, baths: 0, sleeps: 0, cancellation: "", estimate: true },
 ];
 
-const ACTIVITIES: Activity[] = [
+// Ticket links start empty in the seed — real URLs land via /admin or the v4 price-update SQL.
+const ACTIVITY_ROWS: Omit<Activity, "ticketLink">[] = [
   { id: "MK", name: "Magic Kingdom", type: "full", adultPrice: 175, childPrice: 165, category: "Theme park", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Great fit for the whole group, esp. the younger half" },
   { id: "AK", name: "Animal Kingdom", type: "full", adultPrice: 145, childPrice: 135, category: "Theme park", ageFit: "all", area: "orlando", star: true, estimate: true, note: "All ages love the safari" },
   { id: "HS", name: "Hollywood Studios", type: "full", adultPrice: 160, childPrice: 150, category: "Theme park", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Star Wars / Toy Story spans the whole age range" },
@@ -91,6 +92,7 @@ const ACTIVITIES: Activity[] = [
   { id: "EOLA", name: "Lake Eola Park", type: "half", adultPrice: 0, childPrice: 10, category: "Free / low cost", ageFit: "all", area: "orlando", star: true, estimate: true, note: "Swan boats; especially nice for the youngest kids" },
   { id: "PARKAVE", name: "Winter Park / Park Ave", type: "half", adultPrice: 0, childPrice: 0, category: "Free / low cost", ageFit: "all", area: "orlando", star: false, estimate: false, note: "More geared to parents; kids may get bored shopping" },
 ];
+const ACTIVITIES: Activity[] = ACTIVITY_ROWS.map((a) => ({ ...a, ticketLink: "" }));
 
 const ITINERARY_SLOTS: ItinerarySlot[] = [
   { optionId: "A", date: "2026-10-31", dayLabel: "Sat — arrive", slotType: "half", activityId: "DS" },
