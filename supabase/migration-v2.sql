@@ -52,3 +52,4 @@ alter table activities add column if not exists age_fit text not null default 'a
 alter table activities add column if not exists area text not null default 'orlando';
 
 alter table families add column if not exists bags int not null default 2;
+alter table families add column if not exists preferred_airline text not null default '';

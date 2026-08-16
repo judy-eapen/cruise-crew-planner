@@ -675,6 +675,7 @@ export default function AdminPage() {
                       <input className="w-12 rounded-lg border border-white/20 bg-white/10 px-1 py-1 text-center text-white" value={draft(k(key), val)} onChange={(e) => setDraft(k(key), e.target.value)} />
                     </label>
                   ))}
+                  <input className={`${txtCls} w-28`} placeholder="✈️ airline pref" value={draft(k("pa"), f.preferredAirline)} onChange={(e) => setDraft(k("pa"), e.target.value)} />
                   <button
                     onClick={() =>
                       run(
@@ -688,6 +689,7 @@ export default function AdminPage() {
                             kids10plus: Number(draft(k("k10"), f.kids10plus)),
                             rooms: Number(draft(k("rm"), f.rooms)),
                             bags: Number(draft(k("bg"), f.bags)),
+                            preferredAirline: draft(k("pa"), f.preferredAirline),
                           },
                         },
                         `Saved ${f.id} ✓`

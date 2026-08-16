@@ -92,6 +92,7 @@ export interface Family {
   kids10plus: number; // pay adult ticket prices
   rooms: number;
   bags: number; // checked bags for the flight
+  preferredAirline: string; // "" = no preference; else defaults pick this airline's cheapest flight
   placeholder: boolean;
 }
 

@@ -97,10 +97,16 @@ export function hotelsForSegment(hotels: Hotel[], segment: "pre" | "post", night
   return hotels.filter((h) => (segmentStay(h, segment, nights)?.total ?? 0) > 0);
 }
 
-/** The organizer's suggested configuration: cheapest flight, first hotel, sample activities. */
-export function defaultBuild(data: TripData, optionId: OptionId): Build {
+/** The organizer's suggested configuration: cheapest flight (honoring the family's
+ * preferred airline when set), first hotel, sample activities. */
+export function defaultBuild(data: TripData, optionId: OptionId, preferredAirline?: string): Build {
   const option = data.dateOptions.find((o) => o.id === optionId)!;
-  const quotes = quotesForOption(data, optionId);
+  let quotes = quotesForOption(data, optionId);
+  if (preferredAirline?.trim()) {
+    const pref = preferredAirline.trim().toLowerCase();
+    const matching = quotes.filter((q) => q.airline.toLowerCase().includes(pref));
+    if (matching.length) quotes = matching;
+  }
   const activities: Record<string, string | null> = {};
   for (const s of data.slots) {
     if (s.optionId === optionId && s.slotType !== "travel") activities[s.date] = s.activityId;

@@ -119,13 +119,13 @@ const ITINERARY_SLOTS: ItinerarySlot[] = [
 ];
 
 const FAMILIES: Family[] = [
-  { id: "F1", name: "Family 1", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
-  { id: "F2", name: "Family 2", adults: 2, kids39: 2, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
-  { id: "F3", name: "Family 3", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
-  { id: "F4", name: "Family 4", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
-  { id: "F5", name: "Family 5", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
-  { id: "F6", name: "Family 6", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
-  { id: "F7", name: "Family 7", adults: 2, kids39: 0, kids10plus: 1, rooms: 1, bags: 2, placeholder: true },
+  { id: "F1", name: "Family 1", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, preferredAirline: "", placeholder: true },
+  { id: "F2", name: "Family 2", adults: 2, kids39: 2, kids10plus: 1, rooms: 1, bags: 2, preferredAirline: "", placeholder: true },
+  { id: "F3", name: "Family 3", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, preferredAirline: "", placeholder: true },
+  { id: "F4", name: "Family 4", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, preferredAirline: "", placeholder: true },
+  { id: "F5", name: "Family 5", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, preferredAirline: "", placeholder: true },
+  { id: "F6", name: "Family 6", adults: 2, kids39: 1, kids10plus: 1, rooms: 1, bags: 2, preferredAirline: "", placeholder: true },
+  { id: "F7", name: "Family 7", adults: 2, kids39: 0, kids10plus: 1, rooms: 1, bags: 2, preferredAirline: "", placeholder: true },
 ];
 
 export const SEED: TripData = {

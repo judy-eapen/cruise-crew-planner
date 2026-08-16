@@ -86,6 +86,7 @@ create table if not exists families (
   kids_10plus int not null,
   rooms int not null default 1,
   bags int not null default 2,
+  preferred_airline text not null default '',
   placeholder boolean not null default false,
   token text unique not null
 );

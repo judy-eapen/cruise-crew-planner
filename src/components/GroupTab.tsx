@@ -5,9 +5,10 @@ import { costForBuild, defaultBuild, fmt, partyFromFamily } from "@/lib/pricing"
 
 export default function GroupTab({ data }: { data: TripData }) {
   // Always priced on the organizer's suggested plan so every cell is apples-to-apples.
-  const defaults = Object.fromEntries(data.dateOptions.map((o) => [o.id, defaultBuild(data, o.id)]));
   const rows = data.families.map((f) => {
-    const costs = data.dateOptions.map((o) => costForBuild(data, o.id, defaults[o.id], partyFromFamily(f)));
+    const costs = data.dateOptions.map((o) =>
+      costForBuild(data, o.id, defaultBuild(data, o.id, f.preferredAirline), partyFromFamily(f))
+    );
     const min = Math.min(...costs.map((c) => c.total));
     return { family: f, costs, min };
   });

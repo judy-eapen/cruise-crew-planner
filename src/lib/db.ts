@@ -103,6 +103,7 @@ const mapFamily = (r: any): Family => ({
   kids10plus: r.kids_10plus,
   rooms: r.rooms,
   bags: r.bags ?? 2,
+  preferredAirline: r.preferred_airline ?? "",
   placeholder: r.placeholder,
 });
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -118,7 +119,7 @@ export async function getTripData(): Promise<TripData> {
     supabase.from("hotels").select("*").order("id"),
     supabase.from("activities").select("*"),
     supabase.from("itinerary_slots").select("*").order("date"),
-    supabase.from("families").select("id,name,adults,kids_3_9,kids_10plus,rooms,bags,placeholder").order("id"),
+    supabase.from("families").select("id,name,adults,kids_3_9,kids_10plus,rooms,bags,preferred_airline,placeholder").order("id"),
   ]);
 
   // Not seeded yet (or schema missing) → keep serving the bundled seed.
