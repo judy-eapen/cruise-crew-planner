@@ -267,7 +267,7 @@ export async function POST(req: Request) {
       }
 
       case "update-activity": {
-        const { id, adultPrice, childPrice, ageFit, area, datePrices, ticketLink } = payload;
+        const { id, adultPrice, childPrice, ageFit, area, datePrices, ticketLink, star, estimate } = payload;
         const cleanDates: Record<string, { adult: number; child: number }> = {};
         if (datePrices && typeof datePrices === "object") {
           for (const [d, p] of Object.entries(datePrices as Record<string, { adult: unknown; child: unknown }>)) {
@@ -285,7 +285,9 @@ export async function POST(req: Request) {
             age_fit: ["all", "younger", "older", "check"].includes(ageFit) ? ageFit : "all",
             area: ["orlando", "port", "daytrip"].includes(area) ? area : "orlando",
             ticket_link: String(ticketLink ?? "").slice(0, 300),
-            estimate: false,
+            star: Boolean(star),
+            // Estimate flag is now explicit (the ~est checkbox) instead of force-cleared on save.
+            estimate: Boolean(estimate),
           })
           .eq("id", id);
         if (error) throw new Error(error.message);

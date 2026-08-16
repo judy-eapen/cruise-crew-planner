@@ -54,6 +54,7 @@ export default function BuilderSection({
   const [filterCost, setFilterCost] = useState<"all" | "free" | "paid">("all");
   const [filterAge, setFilterAge] = useState<"all" | "younger" | "older">("all");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   const option = data.dateOptions.find((o) => o.id === optionId)!;
   const slots = data.slots.filter((s) => s.optionId === optionId);
@@ -65,6 +66,7 @@ export default function BuilderSection({
 
   const tableActivities = useMemo(() => {
     let list = data.activities.slice();
+    if (!showAllActivities) list = list.filter((a) => a.star);
     if (filterType !== "all") list = list.filter((a) => a.type === filterType);
     if (filterCost === "free") list = list.filter((a) => a.adultPrice + a.childPrice === 0);
     if (filterCost === "paid") list = list.filter((a) => a.adultPrice + a.childPrice > 0);
@@ -72,7 +74,7 @@ export default function BuilderSection({
     list.sort((a, b) => (sortDir === "asc" ? ticketCost(a) - ticketCost(b) : ticketCost(b) - ticketCost(a)));
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, filterType, filterCost, filterAge, sortDir, party]);
+  }, [data, filterType, filterCost, filterAge, sortDir, party, showAllActivities]);
 
   // Strip iconography reads as the journey: fly days show the plane, boarding
   // day (Nov 2) joins the cruise block, everything else follows its slot.
@@ -334,6 +336,14 @@ export default function BuilderSection({
           const eligible = data.activities
             .filter((a) => (s.slotType === "half" ? a.type === "half" : true))
             .sort((a, b) => ticketCost(a, s.date) - ticketCost(b, s.date));
+          const topPicks = eligible.filter((a) => a.star);
+          const moreIdeas = eligible.filter((a) => !a.star);
+          const optionFor = (a: Activity) => (
+            <option key={a.id} value={a.id}>
+              {a.star ? "⭐ " : ""}
+              {a.name} {ticketCost(a, s.date) > 0 ? `(${fmt(ticketCost(a, s.date))})` : "(free)"}
+            </option>
+          );
           const chosen = data.activities.find((a) => a.id === build.activities[s.date]);
           return (
             <div key={s.date} className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -348,12 +358,14 @@ export default function BuilderSection({
                 className={`${selCls} mt-2 w-full`}
               >
                 <option value="">— rest / nothing planned —</option>
-                {eligible.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.star ? "⭐ " : ""}
-                    {a.name} {ticketCost(a, s.date) > 0 ? `(${fmt(ticketCost(a, s.date))})` : "(free)"}
-                  </option>
-                ))}
+                {topPicks.length > 0 ? (
+                  <>
+                    <optgroup label="⭐ Top picks">{topPicks.map(optionFor)}</optgroup>
+                    {moreIdeas.length > 0 && <optgroup label="More ideas">{moreIdeas.map(optionFor)}</optgroup>}
+                  </>
+                ) : (
+                  eligible.map(optionFor)
+                )}
               </select>
               {s.slotType === "half" && (
                 <p className="mt-1.5 text-[11px] text-slate-500">
@@ -389,9 +401,19 @@ export default function BuilderSection({
       {/* Activity browser */}
       <details className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
         <summary className="cursor-pointer text-sm font-semibold text-slate-300">
-          📋 Browse all {data.activities.length} activities (filter & sort)
+          📋 Browse activities — ⭐ top picks first (filter & sort)
         </summary>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <button
+            onClick={() => setShowAllActivities(!showAllActivities)}
+            className={`rounded-full px-3 py-1 font-semibold transition ${
+              showAllActivities ? "bg-white/10 text-slate-200 hover:bg-white/20" : "bg-amber-300 text-indigo-950"
+            }`}
+          >
+            {showAllActivities
+              ? `Showing all ${data.activities.length} — back to ⭐ top picks`
+              : `⭐ Top picks · show all ${data.activities.length}`}
+          </button>
           <select value={filterType} onChange={(e) => setFilterType(e.target.value as never)} className={selCls}>
             <option value="all">Full + half day</option>
             <option value="full">Full day only</option>

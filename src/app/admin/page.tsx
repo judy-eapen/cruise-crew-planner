@@ -605,6 +605,14 @@ export default function AdminPage() {
                     <option value="port">Near port</option>
                     <option value="daytrip">Day trip</option>
                   </select>
+                  <label className="flex items-center gap-1 text-xs text-slate-400" title="⭐ top pick — shown first in dropdowns and the browse table">
+                    <input type="checkbox" checked={draft(k("star"), String(a.star)) === "true"} onChange={(e) => setDraft(k("star"), String(e.target.checked))} />
+                    ⭐
+                  </label>
+                  <label className="flex items-center gap-1 text-xs text-slate-400" title="~ price is an estimate (unconfirmed)">
+                    <input type="checkbox" checked={draft(k("est"), String(a.estimate)) === "true"} onChange={(e) => setDraft(k("est"), String(e.target.checked))} />
+                    ~est
+                  </label>
                   <input className={`${txtCls} w-44`} placeholder="🎟 ticket link (https://…)" value={draft(k("link"), a.ticketLink)} onChange={(e) => setDraft(k("link"), e.target.value)} />
                   <button
                     onClick={() =>
@@ -617,6 +625,8 @@ export default function AdminPage() {
                             childPrice: Number(draft(k("cp"), a.childPrice)),
                             ageFit: draft(k("age"), a.ageFit),
                             area: draft(k("area"), a.area),
+                            star: draft(k("star"), String(a.star)) === "true",
+                            estimate: draft(k("est"), String(a.estimate)) === "true",
                             ticketLink: draft(k("link"), a.ticketLink),
                             datePrices: datePricesPayload(),
                           },
