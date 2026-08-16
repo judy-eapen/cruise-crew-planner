@@ -5,6 +5,7 @@ import { SEED } from "@/data/trip";
 import type { Build, OptionId, TripData } from "@/lib/types";
 import { costForBuild, defaultBuild, partyFromFamily, type PartySize } from "@/lib/pricing";
 import CompareTab from "./CompareTab";
+import FlightsGlance from "./FlightsGlance";
 import BuilderSection from "./BuilderSection";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
@@ -303,6 +304,17 @@ export default function Planner() {
 
         <section id="build" className="scroll-mt-40">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300/80">02 · Build your trip</p>
+          <div className="mb-8">
+            <FlightsGlance
+              data={data}
+              party={party}
+              familyLabel={familyLabel}
+              selectedOption={selectedOption}
+              buildFor={effectiveBuild}
+              onPickQuote={(id, quoteId) => updateBuild(id, { ...effectiveBuild(id), flightId: quoteId })}
+              onSelectOption={setSelectedOption}
+            />
+          </div>
           <h2 className="font-display mb-1 text-2xl tracking-wide text-white">
             Make Option {selectedOption} yours
           </h2>
