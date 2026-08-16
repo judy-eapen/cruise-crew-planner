@@ -6,7 +6,7 @@ import {
   costForBuild,
   fmt,
   hotelSegmentCost,
-  segmentNightRates,
+  segmentStay,
   quoteCostForParty,
   quotesForOption,
   totalPeople,
@@ -103,8 +103,8 @@ export default function BuilderSection({
   const hotelCard = (h: Hotel, segment: "pre" | "post", nights: number) => {
     const selected = (segment === "pre" ? build.preHotelId : build.postHotelId) === h.id;
     const segCost = hotelSegmentCost(h, segment, nights, party, familyCount);
-    const nightRates = segmentNightRates(h, segment, nights);
-    const rateText = nightRates.map((n) => `${n.label} ${fmt(n.rate)}`).join(" + ");
+    const stay = segmentStay(h, segment, nights);
+    const rateText = stay ? `${stay.label}: ${fmt(stay.total)}` : "";
     return (
       <button
         key={`${segment}-${h.id}`}
@@ -127,7 +127,7 @@ export default function BuilderSection({
         <p className="mt-1.5 text-sm text-amber-200">
           {h.estimate && "~"}
           {rateText}
-          {h.priceMode === "per_property_night_split" ? ` (whole place, split ${familyCount} ways)` : "/night per room"}{" "}
+          {h.priceMode === "per_property_night_split" ? ` whole place, split ${familyCount} ways` : "/room for the stay"}{" "}
           → <span className="font-bold">{fmt(segCost)}</span> for {familyLabel}
         </p>
       </button>

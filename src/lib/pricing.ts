@@ -48,26 +48,20 @@ export function quoteCostForParty(q: FlightQuote, party: PartySize): number {
   return q.farePerPerson * totalPeople(party) + q.bagFee * party.bags;
 }
 
-/** The specific nightly rates a segment uses (pre: Oct 31/Nov 1; post: Nov 6/Nov 7). */
-export function segmentNightRates(hotel: Hotel, segment: "pre" | "post", nights: number): { label: string; rate: number }[] {
-  if (nights <= 0) return [];
+/** The exact stay a segment books, with its as-quoted total. */
+export function segmentStay(hotel: Hotel, segment: "pre" | "post", nights: number): { label: string; total: number } | null {
+  if (nights <= 0) return null;
   if (segment === "pre") {
     return nights >= 2
-      ? [
-          { label: "Oct 31", rate: hotel.rateOct31 },
-          { label: "Nov 1", rate: hotel.rateNov1 },
-        ]
-      : [{ label: "Nov 1", rate: hotel.rateNov1 }];
+      ? { label: "Oct 31 → Nov 2 (2 nts)", total: hotel.stayPre2 }
+      : { label: "Nov 1 → Nov 2 (1 nt)", total: hotel.stayPre1 };
   }
   return nights >= 2
-    ? [
-        { label: "Nov 6", rate: hotel.rateNov6 },
-        { label: "Nov 7", rate: hotel.rateNov7 },
-      ]
-    : [{ label: "Nov 6", rate: hotel.rateNov6 }];
+    ? { label: "Nov 6 → Nov 8 (2 nts)", total: hotel.stayPost2 }
+    : { label: "Nov 6 → Nov 7 (1 nt)", total: hotel.stayPost1 };
 }
 
-/** Cost of a hotel segment for a party — priced night by night. */
+/** Cost of a hotel segment for a party — the as-quoted stay total. */
 export function hotelSegmentCost(
   hotel: Hotel,
   segment: "pre" | "post",
@@ -75,12 +69,12 @@ export function hotelSegmentCost(
   party: PartySize,
   familyCount: number
 ): number {
-  const sum = segmentNightRates(hotel, segment, nights).reduce((t, n) => t + n.rate, 0);
-  if (sum <= 0) return 0;
+  const stay = segmentStay(hotel, segment, nights);
+  if (!stay || stay.total <= 0) return 0;
   if (hotel.priceMode === "per_property_night_split") {
-    return Math.round(sum / Math.max(1, familyCount));
+    return Math.round(stay.total / Math.max(1, familyCount));
   }
-  return sum * party.rooms;
+  return stay.total * party.rooms;
 }
 
 /** The organizer's suggested configuration: cheapest flight, first hotel, sample activities. */

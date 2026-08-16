@@ -23,7 +23,7 @@ export default function AdminPage() {
   const [data, setData] = useState<TripData | null>(null);
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [newHotel, setNewHotel] = useState({ name: "", r31: "", r01: "", r06: "", r07: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
+  const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
   const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
 
   const call = useCallback(
@@ -324,7 +324,7 @@ export default function AdminPage() {
         <section className={cardCls}>
           <h2 className="font-bold text-white">Hotels & Airbnbs</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Four nightly rates per property — Oct 31 (Sat/Halloween), Nov 1 (Sun), Nov 6 (Fri), Nov 7 (Sat) — since those are the only nights any option uses and each prices differently. Each rate is per room (hotels) or for the whole property split evenly across the{" "}
+            Four STAY TOTALS per property — enter exactly what the booking site quotes for 10/31→11/2, 11/1→11/2, 11/6→11/8, and 11/6→11/7 (the only stays any option uses; captures 2-night deals automatically). Each total is per room (hotels) or for the whole property split evenly across the{" "}
             {data?.families.length ?? 7} families (Airbnb mode).
           </p>
           <div className="mt-3 space-y-2">
@@ -335,10 +335,10 @@ export default function AdminPage() {
                   <input className={`${txtCls} min-w-56 flex-1`} value={draft(k("name"), h.name)} onChange={(e) => setDraft(k("name"), e.target.value)} />
                   {(
                     [
-                      ["10/31", "r31", h.rateOct31],
-                      ["11/1", "r01", h.rateNov1],
-                      ["11/6", "r06", h.rateNov6],
-                      ["11/7", "r07", h.rateNov7],
+                      ["10/31→11/2", "sp2", h.stayPre2],
+                      ["11/1→11/2", "sp1", h.stayPre1],
+                      ["11/6→11/8", "so2", h.stayPost2],
+                      ["11/6→11/7", "so1", h.stayPost1],
                     ] as const
                   ).map(([label, key, val]) => (
                     <label key={key} className="flex items-center gap-1 text-xs text-slate-500">
@@ -378,10 +378,10 @@ export default function AdminPage() {
                           payload: {
                             id: h.id,
                             name: draft(k("name"), h.name),
-                            rateOct31: Number(draft(k("r31"), h.rateOct31)),
-                            rateNov1: Number(draft(k("r01"), h.rateNov1)),
-                            rateNov6: Number(draft(k("r06"), h.rateNov6)),
-                            rateNov7: Number(draft(k("r07"), h.rateNov7)),
+                            stayPre2: Number(draft(k("sp2"), h.stayPre2)),
+                            stayPre1: Number(draft(k("sp1"), h.stayPre1)),
+                            stayPost2: Number(draft(k("so2"), h.stayPost2)),
+                            stayPost1: Number(draft(k("so1"), h.stayPost1)),
                             priceMode: draft(k("mode"), h.priceMode),
                             stars: Number(draft(k("stars"), h.stars)),
                             area: draft(k("area"), h.area),
@@ -408,10 +408,10 @@ export default function AdminPage() {
               <input placeholder="New hotel / Airbnb name" className={`${txtCls} min-w-56 flex-1`} value={newHotel.name} onChange={(e) => setNewHotel({ ...newHotel, name: e.target.value })} />
               {(
                 [
-                  ["10/31", "r31"],
-                  ["11/1", "r01"],
-                  ["11/6", "r06"],
-                  ["11/7", "r07"],
+                  ["10/31→11/2", "sp2"],
+                  ["11/1→11/2", "sp1"],
+                  ["11/6→11/8", "so2"],
+                  ["11/6→11/7", "so1"],
                 ] as const
               ).map(([label, key]) => (
                 <label key={key} className="flex items-center gap-1 text-xs text-slate-500">
@@ -430,16 +430,16 @@ export default function AdminPage() {
               <input placeholder="area" className={`${txtCls} w-40`} value={newHotel.area} onChange={(e) => setNewHotel({ ...newHotel, area: e.target.value })} />
               <button
                 onClick={() => {
-                  if (!newHotel.name || !newHotel.r31) return;
+                  if (!newHotel.name || !newHotel.sp2) return;
                   run(
                     {
                       action: "upsert-hotel",
                       payload: {
                         name: newHotel.name,
-                        rateOct31: Number(newHotel.r31),
-                        rateNov1: Number(newHotel.r01 || newHotel.r31),
-                        rateNov6: Number(newHotel.r06 || newHotel.r31),
-                        rateNov7: Number(newHotel.r07 || newHotel.r31),
+                        stayPre2: Number(newHotel.sp2),
+                        stayPre1: Number(newHotel.sp1 || 0),
+                        stayPost2: Number(newHotel.so2 || 0),
+                        stayPost1: Number(newHotel.so1 || 0),
                         priceMode: newHotel.mode,
                         stars: Number(newHotel.stars),
                         area: newHotel.area,
@@ -451,7 +451,7 @@ export default function AdminPage() {
                     },
                     "Added ✓"
                   );
-                  setNewHotel({ name: "", r31: "", r01: "", r06: "", r07: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
+                  setNewHotel({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night" });
                 }}
                 className={btnCls}
               >
