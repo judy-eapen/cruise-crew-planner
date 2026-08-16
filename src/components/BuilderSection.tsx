@@ -50,6 +50,7 @@ export default function BuilderSection({
 }) {
   const [copied, setCopied] = useState(false);
   const [filterType, setFilterType] = useState<"all" | "full" | "half">("all");
+  const [stayFilter, setStayFilter] = useState<"all" | "hotel" | "airbnb">("all");
   const [filterCost, setFilterCost] = useState<"all" | "free" | "paid">("all");
   const [filterAge, setFilterAge] = useState<"all" | "younger" | "older">("all");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -178,7 +179,9 @@ export default function BuilderSection({
 
   // Houses and hotels rendered as separate, labeled clusters — cheapest first.
   const segmentBlock = (segment: "pre" | "post", nights: number, header: string) => {
-    const list = hotelsForSegment(data.hotels, segment, nights);
+    const list = hotelsForSegment(data.hotels, segment, nights).filter(
+      (h) => stayFilter === "all" || h.type === stayFilter
+    );
     if (!list.length) return null;
     const costOf = (h: Hotel) => hotelSegmentCost(h, segment, nights, party);
     const minCost = Math.min(...list.map(costOf));
@@ -300,6 +303,29 @@ export default function BuilderSection({
 
       {/* 1 · Hotels, two segments */}
       <h3 className="font-display mt-8 text-xl tracking-wide text-white">1 · Pick your hotels</h3>
+      {(segDates.pre || segDates.post) && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(
+            [
+              ["all", "All stays"],
+              ["hotel", "🏨 Hotels only"],
+              ["airbnb", "🏡 Airbnb only"],
+            ] as const
+          ).map(([f, label]) => (
+            <button
+              key={f}
+              onClick={() => setStayFilter(f)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                stayFilter === f
+                  ? "bg-amber-300 text-indigo-950 shadow-lg shadow-amber-900/30"
+                  : "bg-white/10 text-slate-300 hover:bg-white/20"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       {segDates.pre && segmentBlock("pre", option.preNights, `🌙 Before the cruise · ${segDates.pre}`)}
       {segDates.post && segmentBlock("post", option.postNights, `🌅 After the cruise · ${segDates.post}`)}
       {!segDates.pre && !segDates.post && <p className="mt-2 text-sm text-slate-400">No hotel nights for this option.</p>}
