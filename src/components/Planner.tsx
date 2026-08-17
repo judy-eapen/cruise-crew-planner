@@ -10,10 +10,12 @@ import BuilderSection from "./BuilderSection";
 import PicksCompare from "./PicksCompare";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
+import RidesGuide from "./RidesGuide";
 
 const SECTIONS = [
   { id: "flights", label: "Flights" },
   { id: "build", label: "Build" },
+  { id: "rides", label: "Rides" },
   { id: "group", label: "Compare" },
   { id: "vote", label: "Vote" },
 ] as const;
@@ -422,8 +424,13 @@ export default function Planner() {
           />
         </section>
 
+        <section id="rides" className="scroll-mt-40 border-y border-white/5 bg-emerald-400/[0.06] px-5 py-12 lg:px-12">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">🎢 03 · Ride guide</p>
+          <RidesGuide />
+        </section>
+
         <section id="group" className="scroll-mt-40 border-y border-white/5 bg-fuchsia-500/[0.07] px-5 py-12 lg:px-12">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300">⚖️ 03 · Compare your picks</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300">⚖️ 04 · Compare your picks</p>
           <PicksCompare
             data={data}
             party={party}
@@ -448,7 +455,7 @@ export default function Planner() {
         </section>
 
         <section id="vote" className="scroll-mt-40 bg-cyan-400/[0.06] px-5 py-12 lg:px-12">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">🗳 04 · Decide</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">🗳 05 · Decide</p>
           <VoteTab data={data} />
         </section>
 
