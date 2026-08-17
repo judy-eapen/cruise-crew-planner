@@ -11,6 +11,7 @@ import PicksCompare from "./PicksCompare";
 import GroupTab from "./GroupTab";
 import VoteTab from "./VoteTab";
 import RidesGuide from "./RidesGuide";
+import type { ParkId } from "@/data/rides";
 
 const SECTIONS = [
   { id: "flights", label: "Flights" },
@@ -35,6 +36,12 @@ export default function Planner() {
   const [hasSelection, setHasSelection] = useState(false);
   // Personal builds live in this browser only; the group table uses the suggested plan.
   const [builds, setBuilds] = useState<Partial<Record<OptionId, Build>>>({});
+  // "Who can ride?" links in the builder open the ride guide on a specific park.
+  const [ridesPark, setRidesPark] = useState<ParkId | null>(null);
+  const openRideGuide = (park: ParkId) => {
+    setRidesPark(park);
+    document.getElementById("rides")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     fetch("/api/data")
@@ -421,12 +428,13 @@ export default function Planner() {
             onUpdateBuild={(b) => updateBuild(selectedOption, b)}
             onReset={() => resetBuild(selectedOption)}
             isCustomized={Boolean(builds[selectedOption])}
+            onOpenRideGuide={openRideGuide}
           />
         </section>
 
         <section id="rides" className="scroll-mt-40 border-y border-white/5 bg-emerald-400/[0.06] px-5 py-12 lg:px-12">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">🎢 03 · Ride guide</p>
-          <RidesGuide />
+          <RidesGuide focusPark={ridesPark} />
         </section>
 
         <section id="group" className="scroll-mt-40 border-y border-white/5 bg-fuchsia-500/[0.07] px-5 py-12 lg:px-12">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PARKS, RIDES, type ParkId, type Ride, type RideKind } from "@/data/rides";
 
 const KIND_ICON: Record<RideKind, string> = {
@@ -72,9 +72,14 @@ function RideRow({ ride, height }: { ride: Ride; height: number | null }) {
   );
 }
 
-export default function RidesGuide() {
+export default function RidesGuide({ focusPark }: { focusPark?: ParkId | null }) {
   const [parkId, setParkId] = useState<ParkId>("usf");
   const [height, setHeight] = useState<number | null>(null);
+
+  // "Who can ride?" links in the builder land here with their park pre-selected.
+  useEffect(() => {
+    if (focusPark && PARKS.find((p) => p.id === focusPark)?.available) setParkId(focusPark);
+  }, [focusPark]);
 
   const park = PARKS.find((p) => p.id === parkId)!;
   const rides = RIDES.filter((r) => r.park === parkId);

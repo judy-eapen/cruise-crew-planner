@@ -22,6 +22,23 @@ export const PARKS: Park[] = [
   { id: "lego", name: "LEGOLAND Florida", short: "Legoland", emoji: "🧱", available: false },
 ];
 
+// Trip activities (data/trip.ts + DB ids) that are theme parks with ride data.
+export const ACTIVITY_PARK: Record<string, ParkId> = {
+  US: "usf",
+  IOA: "ioa",
+  EPIC: "epic",
+  MK: "mk",
+  LEGO: "lego",
+};
+
+/** Park for an activity id, only if its ride data is loaded (chip-worthy). */
+export function parkForActivity(activityId: string | null | undefined): Park | null {
+  if (!activityId) return null;
+  const parkId = ACTIVITY_PARK[activityId];
+  const park = parkId ? PARKS.find((p) => p.id === parkId) : undefined;
+  return park?.available ? park : null;
+}
+
 export type RideKind = "coaster" | "dark" | "water" | "family" | "kiddie";
 
 export interface Ride {
