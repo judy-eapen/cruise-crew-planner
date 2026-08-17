@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { TripData, VoteRecord } from "@/lib/types";
+import type { Build, OptionId, TripData, VoteRecord } from "@/lib/types";
+import { costForBuild, defaultBuild, fmt, partyFromFamily } from "@/lib/pricing";
 import { shortDate } from "@/lib/dates";
 
 interface Results {
   enabled: boolean;
   votes: VoteRecord[];
   totalFamilies: number;
+  builds?: Record<string, Partial<Record<OptionId, Build>>>;
 }
 
 export default function VoteTab({ data }: { data: TripData }) {
@@ -72,7 +74,12 @@ export default function VoteTab({ data }: { data: TripData }) {
           const width = results.totalFamilies ? (t.first / results.totalFamilies) * 100 : 0;
           return (
             <div key={o.id} className="flex items-center gap-3">
-              <span className="w-20 shrink-0 text-sm font-bold text-white">Option {o.id}</span>
+              <span className="w-36 shrink-0 text-sm font-bold text-white">
+                Option {o.id}
+                <span className="block text-[10px] font-medium text-slate-400">
+                  {shortDate(o.departDate)} → {shortDate(o.returnDate)}
+                </span>
+              </span>
               <div className="h-6 flex-1 overflow-hidden rounded-full bg-white/10">
                 <div
                   className="flex h-full items-center rounded-full bg-gradient-to-r from-amber-300 to-pink-400 px-2 text-xs font-bold text-indigo-950 transition-all"
@@ -92,19 +99,52 @@ export default function VoteTab({ data }: { data: TripData }) {
       {/* Individual votes — transparency is the guardrail */}
       {turnout > 0 && (
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {results.votes.map((v) => (
-            <div key={v.familyId} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-              <p className="font-bold text-white">{v.familyName}</p>
-              <p className="mt-1 text-sm text-amber-200">
-                Top: Option {v.firstChoice}
-                {v.secondChoice && <span className="text-slate-300"> · backup {v.secondChoice}</span>}
-              </p>
-              {v.comment && <p className="mt-1.5 text-xs italic text-slate-300">&ldquo;{v.comment}&rdquo;</p>}
-              <p className="mt-2 text-[10px] uppercase tracking-wide text-slate-500">
-                updated {shortDate(v.updatedAt.slice(0, 10))}
-              </p>
-            </div>
-          ))}
+          {results.votes.map((v) => {
+            const opt = data.dateOptions.find((o) => o.id === v.firstChoice);
+            const fam = data.families.find((f) => f.id === v.familyId);
+            const savedBuild = results.builds?.[v.familyId]?.[v.firstChoice];
+            const build = savedBuild ?? defaultBuild(data, v.firstChoice);
+            const cost = fam ? costForBuild(data, v.firstChoice, build, partyFromFamily(fam)) : null;
+            const preH = data.hotels.find((h) => h.id === build.preHotelId);
+            const postH = data.hotels.find((h) => h.id === build.postHotelId);
+            const hotels = [preH?.name, postH && postH.id !== preH?.id ? postH.name : null].filter(Boolean).join(" · ");
+            const acts = Object.values(build.activities)
+              .filter(Boolean)
+              .map((id) => data.activities.find((a) => a.id === id)?.name)
+              .filter(Boolean)
+              .join(" · ");
+            return (
+              <div key={v.familyId} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                <p className="font-bold text-white">{v.familyName}</p>
+                <p className="mt-1 text-sm text-amber-200">
+                  Top: Option {v.firstChoice}
+                  {opt && (
+                    <span className="text-slate-400">
+                      {" "}
+                      · {shortDate(opt.departDate)} → {shortDate(opt.returnDate)}
+                    </span>
+                  )}
+                  {v.secondChoice && <span className="text-slate-300"> · backup {v.secondChoice}</span>}
+                </p>
+                <div className="mt-1.5 space-y-0.5 text-xs text-slate-300">
+                  <p>✈️ {cost?.quote ? `${cost.quote.airline} · ${cost.quote.origin} → MCO` : "flight TBD"}</p>
+                  <p>🏨 {hotels || "no hotel nights"}</p>
+                  {acts && <p>🎢 {acts}</p>}
+                  {cost && fam && (
+                    <p className="text-slate-400">
+                      {cost.anyEstimate && "~"}
+                      {fmt(cost.total)} for {fam.name}
+                      {!savedBuild && <span className="text-slate-500"> · suggested plan (they haven&apos;t customized)</span>}
+                    </p>
+                  )}
+                </div>
+                {v.comment && <p className="mt-1.5 text-xs italic text-slate-300">&ldquo;{v.comment}&rdquo;</p>}
+                <p className="mt-2 text-[10px] uppercase tracking-wide text-slate-500">
+                  updated {shortDate(v.updatedAt.slice(0, 10))}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
 
