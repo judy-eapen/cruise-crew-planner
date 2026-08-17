@@ -20,7 +20,7 @@ const THRILL_STYLE = [
 ] as const;
 
 // The height cutoffs that actually exist across the loaded parks.
-const HEIGHT_CHIPS = [34, 36, 38, 40, 42, 44, 48, 51, 54] as const;
+const HEIGHT_CHIPS = [32, 34, 36, 38, 40, 42, 44, 48, 51, 54] as const;
 
 function heightBadge(r: Ride): string {
   if (r.minHeight === null) return "any height";
@@ -112,9 +112,8 @@ export default function RidesGuide({ focusPark }: { focusPark?: ParkId | null })
     <div>
       <h2 className="font-display mb-1 text-2xl tracking-wide text-white">Who can ride what?</h2>
       <p className="mb-4 max-w-2xl text-sm text-slate-400">
-        Every ride with its height requirement. Tap your kid&apos;s height to see their exact list — measure in
-        shoes, parks check with shoes on. Universal&apos;s rule: kids under 48″ ride everything on their list{" "}
-        <em>with an adult along</em>.
+        Every ride at every park with its height requirement. Tap your kid&apos;s height to see their exact list —
+        measure in shoes, parks check with shoes on.
       </p>
 
       {/* Park picker */}
@@ -129,6 +128,8 @@ export default function RidesGuide({ focusPark }: { focusPark?: ParkId | null })
           )
         )}
       </div>
+
+      {park.note && <p className="mb-3 text-xs font-semibold text-amber-200/90">ℹ️ {park.note}</p>}
 
       {/* Height picker */}
       <div className="mb-5 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2.5">
@@ -205,11 +206,12 @@ export default function RidesGuide({ focusPark }: { focusPark?: ParkId | null })
       )}
 
       <p className="mt-5 text-xs text-slate-400">
-        Heights from Universal&apos;s official Rider Safety guide (effective Aug 6, 2026) ·{" "}
-        <span className="text-emerald-300">gentle</span> = fine for the 4–9 crowd ·{" "}
+        Heights verified Aug 2026 — Universal parks from Universal&apos;s official Rider Safety guides; Disney
+        parks cross-checked across two current trackers (Big Thunder dropped to 38″ in May 2026); SeaWorld from
+        seaworld.com · <span className="text-emerald-300">gentle</span> = fine for the 4–9 crowd ·{" "}
         <span className="text-amber-200">moderate</span> = judgment call for littles who clear the bar ·{" "}
         <span className="text-pink-300">intense</span> = built for the 10+ kids (and brave grown-ups) · closed
-        rides (Rip Ride Rockit, Fast &amp; Furious) excluded
+        rides (Rip Ride Rockit, Fast &amp; Furious, DINOSAUR) excluded
       </p>
     </div>
   );
