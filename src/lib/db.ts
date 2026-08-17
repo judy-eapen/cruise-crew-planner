@@ -132,7 +132,8 @@ export async function getTripData(): Promise<TripData> {
     source: "db",
     dateOptions: opts.data.map(mapOption),
     flights: (flights.data ?? []).map(mapQuote),
-    hotels: (hotels.data ?? []).map(mapHotel),
+    // Airbnbs are hidden app-wide (group decided against them); rows stay in the DB untouched.
+    hotels: (hotels.data ?? []).map(mapHotel).filter((h) => h.type !== "airbnb"),
     activities: (activities.data ?? []).map(mapActivity),
     slots: (slots.data ?? []).map(mapSlot),
     families: (families.data ?? []).map(mapFamily),

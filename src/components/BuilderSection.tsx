@@ -50,7 +50,6 @@ export default function BuilderSection({
 }) {
   const [copied, setCopied] = useState(false);
   const [filterType, setFilterType] = useState<"all" | "full" | "half">("all");
-  const [stayFilter, setStayFilter] = useState<"all" | "hotel" | "airbnb">("all");
   const [filterCost, setFilterCost] = useState<"all" | "free" | "paid">("all");
   const [filterAge, setFilterAge] = useState<"all" | "younger" | "older">("all");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -138,13 +137,11 @@ export default function BuilderSection({
           ];
           if (needed.every((seg) => segs.includes(seg))) glideTo("pick-activities");
         }}
-        className={`w-full border-l-[3px] px-4 py-2.5 text-left transition ${
-          h.type === "airbnb" ? "border-l-emerald-300/70" : "border-l-sky-300/50"
-        } ${selected ? "bg-amber-300/10" : h.type === "airbnb" ? "bg-emerald-400/[0.05] hover:bg-emerald-400/10" : "hover:bg-white/5"}`}
+        className={`w-full px-4 py-2.5 text-left transition ${selected ? "bg-amber-300/10" : "hover:bg-white/5"}`}
       >
         <span className="flex items-baseline justify-between gap-2">
           <span className={`text-sm font-semibold ${selected ? "text-amber-200" : "text-slate-100"}`}>
-            {h.type === "airbnb" ? "🏡" : "🏨"} {h.name}
+            🏨 {h.name}
             {selected && " ✓"}
           </span>
           <span className={`shrink-0 text-sm font-bold tabular-nums ${isCheapest ? "text-emerald-300" : "text-slate-200"}`}>
@@ -156,20 +153,11 @@ export default function BuilderSection({
             )}
           </span>
         </span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
-          <span
-            className={`rounded-full px-1.5 py-px text-[9px] font-bold uppercase tracking-wide ${
-              h.type === "airbnb" ? "bg-emerald-400/20 text-emerald-300" : "bg-sky-400/20 text-sky-300"
-            }`}
-          >
-            {h.type === "airbnb" ? "Airbnb" : "Hotel"}
-          </span>
-          <span>
-            {"⭐".repeat(h.stars)} · {h.area}
-            {h.pool && " · 🏊"}
-            {h.breakfastIncluded && " · 🍳"}
-            {h.priceMode === "per_property_night_split" && ` · split ${h.sharedFamilies} ways`}
-          </span>
+        <span className="mt-0.5 block text-[11px] text-slate-400">
+          {"⭐".repeat(h.stars)} · {h.area}
+          {h.pool && " · 🏊"}
+          {h.breakfastIncluded && " · 🍳"}
+          {h.priceMode === "per_property_night_split" && ` · split ${h.sharedFamilies} ways`}
         </span>
         {selected && (
           <span className="mt-2 block rounded-xl bg-white/5 px-3 py-2 text-xs">
@@ -200,7 +188,7 @@ export default function BuilderSection({
                 onKeyDown={(e) => e.key === "Enter" && openLink(e)}
                 className="mt-1 inline-block font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
               >
-                View {h.type === "airbnb" ? "listing" : "hotel"} ↗
+                View hotel ↗
               </span>
             )}
           </span>
@@ -212,9 +200,7 @@ export default function BuilderSection({
   // One ranked list per segment — hotels and Airbnbs together, cheapest first.
   const segmentBlock = (segment: "pre" | "post", nights: number, header: string) => {
     const costOf = (h: Hotel) => hotelSegmentCost(h, segment, nights, party);
-    const list = hotelsForSegment(data.hotels, segment, nights)
-      .filter((h) => stayFilter === "all" || h.type === stayFilter)
-      .sort((a, b) => costOf(a) - costOf(b));
+    const list = hotelsForSegment(data.hotels, segment, nights).sort((a, b) => costOf(a) - costOf(b));
     if (!list.length) return null;
     const minCost = costOf(list[0]);
     return (
@@ -326,32 +312,9 @@ export default function BuilderSection({
       {/* 1 · Hotels, two segments */}
       <h3 id="pick-hotels" className="font-display mt-8 scroll-mt-40 text-xl tracking-wide text-white">1 · Pick your hotels</h3>
       {(segDates.pre || segDates.post) && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(
-            [
-              ["all", "All stays"],
-              ["hotel", "🏨 Hotels only"],
-              ["airbnb", "🏡 Airbnb only"],
-            ] as const
-          ).map(([f, label]) => (
-            <button
-              key={f}
-              onClick={() => setStayFilter(f)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                stayFilter === f
-                  ? "bg-amber-300 text-indigo-950 shadow-lg shadow-amber-900/30"
-                  : "bg-white/10 text-slate-300 hover:bg-white/20"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-      {(segDates.pre || segDates.post) && (
         <p className="mt-1.5 text-xs text-slate-400">
           Cheapest first · prices are what <span className="font-semibold text-amber-200">{familyLabel}</span> pays for the
-          stay · 💰 = cheapest · 🏡 = one Airbnb booking, cost split across families · tap a stay to pick it
+          stay · 💰 = cheapest · tap a stay to pick it
         </p>
       )}
       {(segDates.pre || segDates.post) && (
