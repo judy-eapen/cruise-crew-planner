@@ -77,19 +77,23 @@ export default function Planner() {
   // Family builds live in the DB (one main URL, honor-system identity); localStorage
   // stays as the instant cache and the home of "custom" builds.
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const persistBuilds = (next: Partial<Record<OptionId, Build>>) => {
     setBuilds(next);
     try {
       window.localStorage.setItem(BUILDS_KEY, JSON.stringify(next));
     } catch {}
     if (familyId !== "custom") {
+      setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         fetch("/api/builds", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ familyId, builds: next }),
-        }).catch(() => {});
+        })
+          .then((r) => setSaveState(r.ok ? "saved" : "error"))
+          .catch(() => setSaveState("error"));
       }, 800);
     }
   };
@@ -339,6 +343,21 @@ export default function Planner() {
                 </button>
               )}
             </div>
+          )}
+          {familyId !== "custom" && saveState !== "idle" && (
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                saveState === "saved"
+                  ? "bg-emerald-400/15 text-emerald-300"
+                  : saveState === "error"
+                    ? "bg-pink-400/15 text-pink-300"
+                    : "bg-white/10 text-slate-300"
+              }`}
+            >
+              {saveState === "saving" && "saving…"}
+              {saveState === "saved" && `✓ picks saved to ${familyLabel.replace(" (adjusted)", "")}`}
+              {saveState === "error" && "⚠ couldn't save — picks are on this device only"}
+            </span>
           )}
           {hasEstimates && (
             <span className="ml-auto hidden items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300 md:inline-flex">
