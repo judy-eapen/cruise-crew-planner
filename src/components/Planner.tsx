@@ -128,7 +128,8 @@ export default function Planner() {
 
   const familyLabel =
     familyId === "custom" || !selectedFamily ? "Custom family" : `${selectedFamily.name}${isTweaked ? " (adjusted)" : ""}`;
-  const priceChecked = data.flights[0]?.priceChecked ?? "2026-08-14";
+  // Latest check date across all quotes (ISO strings compare lexically) — row order is arbitrary.
+  const priceChecked = data.flights.reduce((m, f) => (f.priceChecked > m ? f.priceChecked : m), "") || "2026-08-14";
   const hasEstimates =
     data.flights.some((f) => f.estimate) ||
     data.hotels.some((h) => h.estimate) ||
