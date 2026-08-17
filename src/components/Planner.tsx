@@ -48,6 +48,9 @@ export default function Planner() {
     try {
       const saved = window.localStorage.getItem(BUILDS_KEY);
       if (saved) setBuilds(JSON.parse(saved));
+      // Remember who this device said they were, so return visits price for the right family.
+      const savedFamily = window.localStorage.getItem("ccp-family");
+      if (savedFamily) setFamilyId(savedFamily);
     } catch {}
   }, []);
 
@@ -248,6 +251,9 @@ export default function Planner() {
             onChange={(e) => {
               setFamilyId(e.target.value);
               setTweak(null);
+              try {
+                window.localStorage.setItem("ccp-family", e.target.value);
+              } catch {}
             }}
             className="rounded-full border border-amber-300/50 bg-white/5 px-3.5 py-1.5 text-sm font-bold text-amber-100 [&>option]:text-slate-900"
             aria-label="Family"
