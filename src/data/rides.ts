@@ -2,10 +2,12 @@
 //   usf/ioa — Universal's official Rider Safety guide PDF (effective Aug 6 2026);
 //             Rip Ride Rockit + Fast & Furious Supercharged closed (absent from it)
 //   epic    — Universal's official Epic Universe Safety guide PDF (Oct 4 2025)
-//   mk/epcot/hs/ak — TouringPlans + MouseHacking (May 2026), full agreement;
+//   mk/epcot/hs/ak — verified on disneyworld.disney.go.com attraction pages
+//             (embedded height facets), except Rock 'n' Roller Coaster (page
+//             mid-retheme; 48" via two agreeing trackers, unchanged since 1999);
 //             Big Thunder LOWERED to 38" at its May 2026 reopening; DINOSAUR closed
 //   sw      — seaworld.com official ride pages
-//   lego    — 3 trackers incl. Mar 2026 list; Galacticoaster new for 2026
+//   lego    — legoland.com official Attraction Height Restrictions page
 // Heights in inches; minHeight null = any height.
 
 export type ParkId = "usf" | "ioa" | "epic" | "mk" | "epcot" | "hs" | "ak" | "lego" | "sw";
@@ -172,7 +174,7 @@ export const RIDES: Ride[] = [
   { id: "lego-duplotrain", park: "lego", name: "DUPLO Train", land: "DUPLO Valley", minHeight: null, kind: "kiddie", thrill: 1, note: "For the very smallest crew members" },
   { id: "lego-drivingschool", park: "lego", name: "Driving School", land: "LEGO City", minHeight: null, kind: "family", thrill: 1, note: "Real 'license' course — ages 6–13 drive; Junior version for 3–5" },
   { id: "lego-lostkingdom", park: "lego", name: "Lost Kingdom Adventure", land: "Land of Adventure", minHeight: 30, kind: "dark", thrill: 1, note: "Laser-blaster dark ride" },
-  { id: "lego-kidpower", park: "lego", name: "Kid Power Towers", land: "Fun Town", minHeight: 30, kind: "family", thrill: 1, note: "Pull yourself up, 'free-fall' down — sources disagree on the bar (30–44″), check at the ride" },
+  { id: "lego-kidpower", park: "lego", name: "Kid Power Towers", land: "Fun Town", minHeight: 30, kind: "family", thrill: 1, note: "Pull yourself up, 'free-fall' down — adult along under 42″" },
   { id: "lego-safari", park: "lego", name: "Safari Trek", land: "DUPLO Valley", minHeight: 34, kind: "kiddie", thrill: 1, note: "LEGO animal safari" },
   { id: "lego-coastguard", park: "lego", name: "Coast Guard Academy", land: "LEGO City", minHeight: 34, kind: "family", thrill: 1, note: "Drive your own boat" },
   { id: "lego-rescue", park: "lego", name: "NFPA Rescue Academy", land: "LEGO City", minHeight: 34, kind: "family", thrill: 1, note: "Team fire-truck race — everyone pumps" },
@@ -183,10 +185,10 @@ export const RIDES: Ride[] = [
   { id: "lego-dragon", park: "lego", name: "The Dragon", land: "LEGO Kingdoms", minHeight: 40, kind: "coaster", thrill: 2, note: "Indoor/outdoor family coaster through the castle" },
   { id: "lego-mastersofflight", park: "lego", name: "THE LEGO MOVIE Masters of Flight", land: "LEGO Movie World", minHeight: 40, kind: "family", thrill: 1, note: "Soarin'-style flying theater on Emmet's couch" },
   { id: "lego-unikitty", park: "lego", name: "Unikitty's Disco Drop", land: "LEGO Movie World", minHeight: 40, kind: "kiddie", thrill: 1, note: "Mini tower with a spin" },
-  { id: "lego-aquazone", park: "lego", name: "AQUAZONE Wave Racers", land: "LEGO Technic", minHeight: 40, kind: "water", thrill: 2, note: "Dodge the water blasts" },
+  { id: "lego-aquazone", park: "lego", name: "AQUAZONE Wave Racers", land: "LEGO Technic", minHeight: 40, kind: "water", thrill: 2, note: "Dodge the water blasts — 52″ to ride alone" },
   { id: "lego-coastersaurus", park: "lego", name: "Coastersaurus", land: "Dino Valley", minHeight: 42, kind: "coaster", thrill: 2, note: "Classic wooden coaster, freshly rebuilt 2026" },
   { id: "lego-greatrace", park: "lego", name: "The Great LEGO Race", land: "LEGO Technic", minHeight: 42, kind: "coaster", thrill: 2, note: "The park's wildest coaster" },
-  { id: "lego-galacticoaster", park: "lego", name: "Galacticoaster", land: "LEGO City Space", minHeight: 42, kind: "coaster", thrill: 2, note: "NEW for 2026 — indoor space coaster" },
+  { id: "lego-galacticoaster", park: "lego", name: "Galacticoaster", land: "LEGO City Space", minHeight: 36, kind: "coaster", thrill: 2, note: "NEW for 2026 — indoor space coaster" },
   { id: "lego-mia", park: "lego", name: "Mia's Riding Adventure", land: "Heartlake City", minHeight: 48, kind: "family", thrill: 2, note: "Spinning horse disc coaster — tallest bar in the park" },
 
   // ── SeaWorld Orlando ───────────────────────────────────────────────────────

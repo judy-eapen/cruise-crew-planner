@@ -206,9 +206,8 @@ export default function RidesGuide({ focusPark }: { focusPark?: ParkId | null })
       )}
 
       <p className="mt-5 text-xs text-slate-400">
-        Heights verified Aug 2026 — Universal parks from Universal&apos;s official Rider Safety guides; Disney
-        parks cross-checked across two current trackers (Big Thunder dropped to 38″ in May 2026); SeaWorld from
-        seaworld.com · <span className="text-emerald-300">gentle</span> = fine for the 4–9 crowd ·{" "}
+        Heights verified Aug 2026 from each park&apos;s official site or safety guide (Big Thunder dropped to
+        38″ in May 2026) · <span className="text-emerald-300">gentle</span> = fine for the 4–9 crowd ·{" "}
         <span className="text-amber-200">moderate</span> = judgment call for littles who clear the bar ·{" "}
         <span className="text-pink-300">intense</span> = built for the 10+ kids (and brave grown-ups) · closed
         rides (Rip Ride Rockit, Fast &amp; Furious, DINOSAUR) excluded
