@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60; // fare refreshes make several sequential SerpApi calls
 
 const newToken = () => randomBytes(5).toString("hex"); // 10-char vote-link token
-const today = () => new Date().toISOString().slice(0, 10);
+// Stamp dates in the trip's timezone — toISOString() is UTC and rolls to "tomorrow"
+// after 8pm ET, which mislabeled evening fare fetches. en-CA formats as YYYY-MM-DD.
+const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function POST(req: Request) {
