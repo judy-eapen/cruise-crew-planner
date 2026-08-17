@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SEED } from "@/data/trip";
 import type { Build, OptionId, TripData } from "@/lib/types";
 import { costForBuild, defaultBuild, partyFromFamily, type PartySize } from "@/lib/pricing";
@@ -74,12 +74,40 @@ export default function Planner() {
     setShowGuide(false);
   };
 
+  // Family builds live in the DB (one main URL, honor-system identity); localStorage
+  // stays as the instant cache and the home of "custom" builds.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const persistBuilds = (next: Partial<Record<OptionId, Build>>) => {
     setBuilds(next);
     try {
       window.localStorage.setItem(BUILDS_KEY, JSON.stringify(next));
     } catch {}
+    if (familyId !== "custom") {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        fetch("/api/builds", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ familyId, builds: next }),
+        }).catch(() => {});
+      }, 800);
+    }
   };
+
+  // Selecting a family pulls that family's saved builds from the database.
+  useEffect(() => {
+    if (familyId === "custom") return;
+    let cancelled = false;
+    fetch(`/api/builds?family=${encodeURIComponent(familyId)}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (!cancelled && j && typeof j.builds === "object" && j.builds !== null) setBuilds(j.builds);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [familyId]);
 
   const effectiveBuild = (id: OptionId): Build => builds[id] ?? defaultBuild(data, id);
   const updateBuild = (id: OptionId, b: Build) => persistBuilds({ ...builds, [id]: b });
@@ -224,7 +252,7 @@ export default function Planner() {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
             <span className="font-bold">How this works:</span>
             <span>
-              <span className="font-bold text-amber-300">①</span> Pick <em>your</em> family below
+              <span className="font-bold text-amber-300">①</span> Pick <em>your</em> family below — your picks save to it automatically
             </span>
             <span>
               <span className="font-bold text-amber-300">②</span> Pick your dates & flight, then hotels and activities
