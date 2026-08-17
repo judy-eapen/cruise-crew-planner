@@ -24,7 +24,7 @@ export default function PicksCompare({
     const cost = costForBuild(data, o.id, build, party);
     const preHotel = data.hotels.find((h) => h.id === build.preHotelId);
     const postHotel = data.hotels.find((h) => h.id === build.postHotelId);
-    const acts = Object.values(build.activities)
+    const acts = [...Object.values(build.activities), ...Object.values(build.activities2 ?? {})]
       .filter(Boolean)
       .map((id) => data.activities.find((a) => a.id === id)?.name)
       .filter(Boolean) as string[];

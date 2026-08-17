@@ -218,7 +218,8 @@ export default function BuilderSection({
       .filter((s) => build.activities[s.date])
       .map((s) => {
         const a = data.activities.find((x) => x.id === build.activities[s.date]);
-        return a ? `• ${shortDate(s.date)} (${s.dayLabel}): ${a.name}` : "";
+        const a2 = data.activities.find((x) => x.id === build.activities2?.[s.date]);
+        return a ? `• ${shortDate(s.date)} (${s.dayLabel}): ${a.name}${a2 ? ` + ${a2.name}` : ""}` : "";
       })
       .filter(Boolean);
     const preH = data.hotels.find((h) => h.id === build.preHotelId);
@@ -341,6 +342,7 @@ export default function BuilderSection({
             </option>
           );
           const chosen = data.activities.find((a) => a.id === build.activities[s.date]);
+          const chosen2 = data.activities.find((a) => a.id === build.activities2?.[s.date]);
           return (
             <div key={s.date} className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">
@@ -349,7 +351,13 @@ export default function BuilderSection({
               <select
                 value={build.activities[s.date] ?? ""}
                 onChange={(e) => {
-                  onUpdateBuild({ ...build, activities: { ...build.activities, [s.date]: e.target.value || null } });
+                  const v = e.target.value || null;
+                  const picked = data.activities.find((a) => a.id === v);
+                  const next: Build = { ...build, activities: { ...build.activities, [s.date]: v } };
+                  // The second (half-day) pick only makes sense alongside a half-day first pick.
+                  if (!picked || picked.type !== "half")
+                    next.activities2 = { ...(build.activities2 ?? {}), [s.date]: null };
+                  onUpdateBuild(next);
                   const days = touchedDays.includes(s.date) ? touchedDays : [...touchedDays, s.date];
                   setTouchedDays(days);
                   if (days.length >= freeSlots.length) glideTo("your-total");
@@ -369,6 +377,41 @@ export default function BuilderSection({
               {s.slotType === "half" && (
                 <p className="mt-1.5 text-[11px] text-slate-500">
                   ⏱ Half-day options only — not enough hours for a full-day park on this day
+                </p>
+              )}
+              {s.slotType === "full" && chosen?.type === "half" && (
+                <select
+                  value={build.activities2?.[s.date] ?? ""}
+                  onChange={(e) =>
+                    onUpdateBuild({
+                      ...build,
+                      activities2: { ...(build.activities2 ?? {}), [s.date]: e.target.value || null },
+                    })
+                  }
+                  className={`${selCls} mt-1.5 w-full`}
+                >
+                  <option value="">+ add a second half-day activity (optional)</option>
+                  {eligible
+                    .filter((a) => a.type === "half" && a.id !== chosen.id)
+                    .map(optionFor)}
+                </select>
+              )}
+              {chosen2 && s.slotType === "full" && chosen?.type === "half" && (
+                <p className="mt-1 text-xs text-slate-400">
+                  2nd: {AGE_LABEL[chosen2.ageFit]} · {AREA_LABEL[chosen2.area]}
+                  {chosen2.ticketLink && (
+                    <>
+                      {" · "}
+                      <a
+                        href={chosen2.ticketLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-cyan-300 underline decoration-cyan-300/50 hover:text-cyan-200"
+                      >
+                        Tickets ↗
+                      </a>
+                    </>
+                  )}
                 </p>
               )}
               {chosen && (chosen.ageNotesYounger || chosen.ageNotesOlder) && (

@@ -108,7 +108,7 @@ export default function VoteTab({ data }: { data: TripData }) {
             const preH = data.hotels.find((h) => h.id === build.preHotelId);
             const postH = data.hotels.find((h) => h.id === build.postHotelId);
             const hotels = [preH?.name, postH && postH.id !== preH?.id ? postH.name : null].filter(Boolean).join(" · ");
-            const acts = Object.values(build.activities)
+            const acts = [...Object.values(build.activities), ...Object.values(build.activities2 ?? {})]
               .filter(Boolean)
               .map((id) => data.activities.find((a) => a.id === id)?.name)
               .filter(Boolean)

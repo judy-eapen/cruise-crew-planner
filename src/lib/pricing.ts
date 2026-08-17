@@ -138,12 +138,15 @@ export function costForBuild(data: TripData, optionId: OptionId, build: Build, p
     // (still plannable below, but they don't count).
     if (slot.slotType === "full") activityDays += 1;
     if (slot.slotType === "travel") continue;
-    const actId = build.activities[slot.date];
-    if (!actId) continue;
-    const act = data.activities.find((a) => a.id === actId);
-    if (!act) continue;
-    tickets += activityCostForParty(act, party, slot.date);
-    if (act.estimate && act.adultPrice + act.childPrice > 0) anyEstimate = true;
+    // A full day can hold two half-day picks; both price in.
+    const ids = [build.activities[slot.date], slot.slotType === "full" ? build.activities2?.[slot.date] : null];
+    for (const id of ids) {
+      if (!id) continue;
+      const act = data.activities.find((a) => a.id === id);
+      if (!act) continue;
+      tickets += activityCostForParty(act, party, slot.date);
+      if (act.estimate && act.adultPrice + act.childPrice > 0) anyEstimate = true;
+    }
   }
 
   const total = flights + hotel + tickets;

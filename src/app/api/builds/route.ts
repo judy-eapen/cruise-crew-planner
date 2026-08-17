@@ -16,17 +16,21 @@ function cleanBuilds(raw: any): Record<string, unknown> {
   for (const id of OPTION_IDS) {
     const b = raw[id];
     if (!b || typeof b !== "object") continue;
-    const activities: Record<string, string | null> = {};
-    if (b.activities && typeof b.activities === "object") {
-      for (const [date, v] of Object.entries(b.activities)) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(date)) activities[date] = typeof v === "string" ? v.slice(0, 40) : null;
+    const cleanActs = (raw2: any): Record<string, string | null> => {
+      const acts: Record<string, string | null> = {};
+      if (raw2 && typeof raw2 === "object") {
+        for (const [date, v] of Object.entries(raw2)) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) acts[date] = typeof v === "string" ? v.slice(0, 40) : null;
+        }
       }
-    }
+      return acts;
+    };
     out[id] = {
       flightId: typeof b.flightId === "number" ? b.flightId : null,
       preHotelId: typeof b.preHotelId === "string" ? b.preHotelId.slice(0, 40) : null,
       postHotelId: typeof b.postHotelId === "string" ? b.postHotelId.slice(0, 40) : null,
-      activities,
+      activities: cleanActs(b.activities),
+      activities2: cleanActs(b.activities2),
     };
   }
   return out;

@@ -116,6 +116,8 @@ export interface Build {
   preHotelId: string | null;
   postHotelId: string | null;
   activities: Record<string, string | null>; // date → activityId (free days only)
+  /** Optional second pick per date — lets a full day combine two half-day activities. */
+  activities2?: Record<string, string | null>;
 }
 
 export interface VoteRecord {
