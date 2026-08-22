@@ -311,9 +311,9 @@ export default function AdminPage() {
               </button>
             </div>
             <p className="mt-1.5 text-xs text-slate-500">
-              ✓ always same-airport round trips (BWI→MCO→BWI etc.) · top 3 + cheapest Delta per option · bags
-              assumed $50/each round trip on every airline · full refresh ≈ 36–42 searches, per-option ↻ ≈ 7 (free
-              tier = 250/mo → ~6 full refreshes) · ✍️ manual quotes are never touched
+              ✓ always same-airport round trips (BWI→MCO→BWI etc.) · top 5 + cheapest Delta per option · bags
+              assumed $50/each round trip on every airline · full refresh ≈ 54–66 searches, per-option ↻ ≈ 9–11 (free
+              tier = 250/mo → ~4 full refreshes) · ✍️ manual quotes are never touched
             </p>
             {fareStatus && (
               <p className="mt-1.5 rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-cyan-100">{fareStatus}</p>
@@ -327,7 +327,7 @@ export default function AdminPage() {
                   onClick={() => refreshFares([o.id])}
                   disabled={refreshing}
                   className="rounded-full bg-cyan-400/20 px-2 py-0.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/30 disabled:opacity-50"
-                  title="Fetch fresh fares for just this option (~7 searches)"
+                  title="Fetch fresh fares for just this option (~9-11 searches)"
                 >
                   ↻ fetch live
                 </button>
