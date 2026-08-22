@@ -24,6 +24,7 @@ export interface FlightQuote {
   duration: string; // total flight time each way, e.g. "~2h 15m"
   farePerPerson: number; // round trip; kids 2+ pay the same fare as adults
   bagFee: number; // round trip, per checked bag ($0 = bags included)
+  plane?: string; // aircraft make/model, e.g. "Boeing 737" or "Airbus A320 / Boeing 717" (unknown for older rows)
   estimate: boolean;
   priceChecked: string;
   /** 'manual' = hand-entered, protected from refreshes; 'api' = fetched, replaced on refresh. */

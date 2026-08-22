@@ -26,7 +26,7 @@ export default function AdminPage() {
   const [links, setLinks] = useState<VoteLink[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newHotel, setNewHotel] = useState({ name: "", sp2: "", sp1: "", so2: "", so1: "", stars: "3", area: "", type: "hotel", mode: "per_room_night", link: "", shf: "7", hbr: "", hbd: "", hba: "", hsl: "" });
-  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
+  const [newQuote, setNewQuote] = useState({ optionId: "A", origin: "BWI", airline: "", plane: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
   const [fareFilters, setFareFilters] = useState({
     out: "", // depart-hour window "10,19" = 10am-7pm ("" = any)
     back: "",
@@ -115,7 +115,7 @@ export default function AdminPage() {
       fareFilters.out.trim() ? `out ${fareFilters.out.trim()}h` : "out any",
       fareFilters.back.trim() ? `back ${fareFilters.back.trim()}h` : "back any",
       fareFilters.nonstop ? "nonstop" : "stops ok",
-      fareFilters.noMax8 ? "no MAX 8" : "MAX 8 ok",
+      fareFilters.noMax8 ? "no MAX 8/9" : "MAX 8/9 ok",
       cleanAirlines() ? `only ${cleanAirlines()}` : "all airlines",
     ].join(" · ");
 
@@ -298,10 +298,10 @@ export default function AdminPage() {
               </label>
               <label className="flex items-center gap-1 text-xs text-slate-300">
                 <input type="checkbox" checked={fareFilters.noMax8} onChange={(e) => setFareFilters({ ...fareFilters, noMax8: e.target.checked })} />
-                no 737 MAX 8
+                no 737 MAX 8/9
               </label>
               <span className="text-xs text-slate-400">airlines</span>
-              <input className={`${txtCls} w-24`} placeholder="all" value={fareFilters.airlines} onChange={(e) => setFareFilters({ ...fareFilters, airlines: e.target.value })} title="Only these airlines, as IATA codes (e.g. DL,WN): DL Delta · WN Southwest · UA United · AA American · F9 Frontier · B6 JetBlue · NK Spirit. Blank = all." />
+              <input className={`${txtCls} w-24`} placeholder="all" value={fareFilters.airlines} onChange={(e) => setFareFilters({ ...fareFilters, airlines: e.target.value })} title="Only these airlines, as IATA codes (e.g. DL,WN): DL Delta · WN Southwest · UA United · AA American · B6 JetBlue · NK Spirit. Blank = all. Frontier is always excluded." />
               <button
                 onClick={() => refreshFares(data?.dateOptions.map((o) => o.id) ?? [])}
                 disabled={refreshing}
@@ -359,6 +359,13 @@ export default function AdminPage() {
                           value={draft(k("al"), f.airline)}
                           onChange={(e) => setDraft(k("al"), e.target.value)}
                         />
+                        <input
+                          className={`${txtCls} w-32`}
+                          placeholder="Plane (e.g. Boeing 737)"
+                          title="Aircraft make/model — filled automatically on fetched rows"
+                          value={draft(k("pl"), f.plane ?? "")}
+                          onChange={(e) => setDraft(k("pl"), e.target.value)}
+                        />
                         {f.estimate && <span className="text-xs text-slate-500">~</span>}
                         <span className="text-xs text-slate-500">out</span>
                         <input className={`${txtCls} w-24`} placeholder="7:05 AM" value={draft(k("od"), f.outDepart)} onChange={(e) => setDraft(k("od"), e.target.value)} />
@@ -389,6 +396,7 @@ export default function AdminPage() {
                                   retDepart: draft(k("rd"), f.retDepart),
                                   retArrive: draft(k("ra"), f.retArrive),
                                   duration: draft(k("du"), f.duration),
+                                  plane: draft(k("pl"), f.plane ?? ""),
                                 },
                               },
                               `Saved ${f.airline} quote ✓`
@@ -436,6 +444,7 @@ export default function AdminPage() {
             <input placeholder="back dep 6:10 PM" className={`${txtCls} w-28`} value={newQuote.retDepart} onChange={(e) => setNewQuote({ ...newQuote, retDepart: e.target.value })} />
             <input placeholder="back arr 8:40 PM" className={`${txtCls} w-28`} value={newQuote.retArrive} onChange={(e) => setNewQuote({ ...newQuote, retArrive: e.target.value })} />
             <input placeholder="dur ~2h 15m" className={`${txtCls} w-24`} value={newQuote.duration} onChange={(e) => setNewQuote({ ...newQuote, duration: e.target.value })} />
+            <input placeholder="plane (optional)" title="Aircraft make/model, e.g. Boeing 737 or Airbus A320" className={`${txtCls} w-32`} value={newQuote.plane} onChange={(e) => setNewQuote({ ...newQuote, plane: e.target.value })} />
             <span className="text-xs text-slate-500">fare $</span>
             <input className={numCls} value={newQuote.fare} onChange={(e) => setNewQuote({ ...newQuote, fare: e.target.value })} />
             <span className="text-xs text-slate-500">bag $</span>
@@ -456,13 +465,14 @@ export default function AdminPage() {
                       retDepart: newQuote.retDepart,
                       retArrive: newQuote.retArrive,
                       duration: newQuote.duration,
+                      plane: newQuote.plane.trim(),
                       farePerPerson: Number(newQuote.fare),
                       bagFee: Number(newQuote.bagFee || 0),
                     },
                   },
                   `Added ${newQuote.airline} quote ✓`
                 );
-                setNewQuote({ ...newQuote, airline: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
+                setNewQuote({ ...newQuote, airline: "", plane: "", outDepart: "", outArrive: "", retDepart: "", retArrive: "", duration: "", fare: "", bagFee: "50" });
               }}
               className={btnCls}
             >

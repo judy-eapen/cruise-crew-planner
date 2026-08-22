@@ -48,6 +48,7 @@ const mapQuote = (r: any): FlightQuote => ({
   duration: r.duration ?? "~2h 15m",
   farePerPerson: Number(r.fare_per_person),
   bagFee: Number(r.bag_fee ?? 0),
+  plane: r.plane ?? undefined,
   estimate: r.estimate,
   priceChecked: r.price_checked,
   source: r.source === "api" ? "api" : "manual",

@@ -12,7 +12,7 @@ export interface FareFilters {
   outboundTimes: string; // SerpApi hour window "10,19" = depart 10am-7pm ("" = any)
   returnTimes: string;
   nonstopOnly: boolean;
-  excludeMax8: boolean;
+  excludeMax8: boolean; // excludes both 737 MAX 8 and MAX 9
   includeAirlines: string; // comma-separated IATA codes "DL,WN" ("" = all airlines)
 }
 
@@ -26,6 +26,7 @@ export interface FetchedQuote {
   duration: string;
   farePerPerson: number;
   bagFee: number;
+  plane: string;
   isDelta: boolean;
 }
 
@@ -86,15 +87,28 @@ const sanitizeAirlineCodes = (raw: string): string =>
 const usableItineraries = (json: any, f: FareFilters): any[] =>
   [...(json.best_flights ?? []), ...(json.other_flights ?? [])]
     .filter((it: any) => (it.flights?.length ?? 0) >= 1)
+    // Frontier is never wanted, on any leg — hard-excluded regardless of filters.
+    .filter((it: any) => !it.flights.some((leg: any) => normalizeAirline(leg.airline) === "Frontier"))
     .filter((it: any) => !f.nonstopOnly || it.flights.length === 1)
     .filter(
       (it: any) =>
         !f.excludeMax8 ||
-        !it.flights.some((leg: any) => String(leg.airplane ?? "").toUpperCase().includes("MAX 8"))
+        !it.flights.some((leg: any) => /MAX\s*[89]/.test(String(leg.airplane ?? "").toUpperCase()))
     )
     .filter((it: any) => Number(it.price) > 0);
 
 const isDeltaItin = (c: Candidate) => normalizeAirline(c.itin.flights[0].airline) === "Delta";
+
+// Aircraft across the given legs, deduped: "Boeing 737MAX 8" → "Boeing 737 MAX 8",
+// mixed-equipment trips read "Airbus A320 / Boeing 717".
+const planeLabel = (legs: any[]): string =>
+  [
+    ...new Set(
+      legs
+        .map((l: any) => String(l.airplane ?? "").replace(/(\d)MAX/i, "$1 MAX").trim())
+        .filter(Boolean)
+    ),
+  ].join(" / ");
 
 // First leg's airline; multi-leg itineraries get the stop count appended so the
 // app (which normally speaks nonstop-only) stays honest about them.
@@ -129,6 +143,9 @@ export async function fetchQuotesForOption(
   if (TIME_WIN.test(filters.returnTimes)) baseParams.return_times = filters.returnTimes;
   const codes = sanitizeAirlineCodes(filters.includeAirlines);
   if (codes) baseParams.include_airlines = codes;
+  // SerpApi forbids mixing include_airlines with exclude_airlines, so the F9 ban
+  // rides the API only on unfiltered searches; usableItineraries covers the rest.
+  else baseParams.exclude_airlines = "F9";
 
   const candidates: Candidate[] = [];
   for (const origin of ORIGINS) {
@@ -183,6 +200,7 @@ export async function fetchQuotesForOption(
     let retDepart = "TBD";
     let retArrive = "TBD";
     let price = Number(c.itin.price);
+    let allLegs = [...legs];
     if (c.itin.departure_token) {
       try {
         const json = await serp({
@@ -197,6 +215,7 @@ export async function fetchQuotesForOption(
           retDepart = fmtTime(rLegs[0].departure_airport?.time);
           retArrive = fmtTime(rLegs[rLegs.length - 1].arrival_airport?.time);
           price = Number(rets[0].price);
+          allLegs = [...legs, ...rLegs];
         }
       } catch {
         searches++;
@@ -213,6 +232,7 @@ export async function fetchQuotesForOption(
       duration: fmtDuration(c.itin.total_duration ?? firstLeg.duration),
       farePerPerson: price,
       bagFee: BAG_FEE,
+      plane: planeLabel(allLegs),
       isDelta: normalizeAirline(firstLeg.airline) === "Delta",
     });
   }

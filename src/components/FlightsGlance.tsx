@@ -170,7 +170,8 @@ export default function FlightsGlance({
                         </span>
                       </span>
                       <span className="block text-[11px] text-slate-400">
-                        out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive} ·{" "}
+                        out {q.outDepart} → {q.outArrive} · back {q.retDepart} → {q.retArrive}
+                        {q.plane && ` · ${q.plane}`} ·{" "}
                         <span
                           role="link"
                           tabIndex={0}

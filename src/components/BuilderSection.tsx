@@ -230,7 +230,7 @@ export default function BuilderSection({
     const lines = [
       `✨ Option ${option.id} — ${option.label}`,
       cost.quote
-        ? `Flights: ${cost.quote.origin} → MCO on ${cost.quote.airline} (out ${cost.quote.outDepart}→${cost.quote.outArrive} / back ${cost.quote.retDepart}→${cost.quote.retArrive}) · ${fmt(cost.quote.farePerPerson)}/person${cost.quote.bagFee ? ` + ${fmt(cost.quote.bagFee)}/bag` : ""}`
+        ? `Flights: ${cost.quote.origin} → MCO on ${cost.quote.airline}${cost.quote.plane ? ` (${cost.quote.plane})` : ""} (out ${cost.quote.outDepart}→${cost.quote.outArrive} / back ${cost.quote.retDepart}→${cost.quote.retArrive}) · ${fmt(cost.quote.farePerPerson)}/person${cost.quote.bagFee ? ` + ${fmt(cost.quote.bagFee)}/bag` : ""}`
         : "Flights: TBD",
       preH && segDates.pre ? `Hotel before cruise (${segDates.pre}): ${preH.name}` : "",
       postH && segDates.post ? `Hotel after cruise (${segDates.post}): ${postH.name}` : "",
@@ -295,7 +295,8 @@ export default function BuilderSection({
             <span className="font-bold text-amber-200">
               {cost.quote.airline} · {cost.quote.origin} → MCO
             </span>{" "}
-            · out {cost.quote.outDepart} → {cost.quote.outArrive} · back {cost.quote.retDepart} → {cost.quote.retArrive} ·{" "}
+            · out {cost.quote.outDepart} → {cost.quote.outArrive} · back {cost.quote.retDepart} → {cost.quote.retArrive}
+            {cost.quote.plane && ` · ${cost.quote.plane}`} ·{" "}
             <span className="font-bold text-white">{fmt(cost.flights)}</span> for {familyLabel} ·{" "}
             <a
               href={googleFlightsUrl(cost.quote.origin, option.departDate, option.returnDate)}

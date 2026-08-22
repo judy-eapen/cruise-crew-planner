@@ -187,7 +187,7 @@ export async function POST(req: Request) {
       }
 
       case "add-quote": {
-        const { optionId, origin, airline, outDepart, outArrive, retDepart, retArrive, duration, farePerPerson, bagFee } = payload;
+        const { optionId, origin, airline, outDepart, outArrive, retDepart, retArrive, duration, farePerPerson, bagFee, plane } = payload;
         if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
         const { error } = await supabase.from("flights").insert({
           option_id: optionId,
@@ -200,6 +200,7 @@ export async function POST(req: Request) {
           duration: String(duration ?? "").slice(0, 30) || "~2h 15m",
           fare_per_person: Number(farePerPerson),
           bag_fee: Number(bagFee ?? 50),
+          plane: String(plane ?? "").trim().slice(0, 60) || null,
           estimate: false,
           price_checked: today(),
         });
@@ -208,7 +209,7 @@ export async function POST(req: Request) {
       }
 
       case "update-quote": {
-        const { id, airline, origin, farePerPerson, bagFee, outDepart, outArrive, retDepart, retArrive, duration } = payload;
+        const { id, airline, origin, farePerPerson, bagFee, outDepart, outArrive, retDepart, retArrive, duration, plane } = payload;
         if (!airline || !String(airline).trim()) throw new Error("Airline name is required");
         const { error } = await supabase
           .from("flights")
@@ -222,6 +223,7 @@ export async function POST(req: Request) {
             ret_depart: String(retDepart ?? "TBD").slice(0, 40),
             ret_arrive: String(retArrive ?? "TBD").slice(0, 40),
             duration: String(duration ?? "~2h 15m").slice(0, 30),
+            plane: String(plane ?? "").trim().slice(0, 60) || null,
             estimate: false,
             price_checked: today(),
             // Hand-editing a fetched row adopts it as manual so refreshes can't wipe the edit.
@@ -270,23 +272,28 @@ export async function POST(req: Request) {
         if (result.quotes.length) {
           const del = await supabase.from("flights").delete().eq("option_id", opt.id).eq("source", "api");
           if (del.error) throw new Error(del.error.message);
-          const ins = await supabase.from("flights").insert(
-            result.quotes.map((q) => ({
-              option_id: opt.id,
-              origin: q.origin,
-              airline: q.airline,
-              out_depart: q.outDepart,
-              out_arrive: q.outArrive,
-              ret_depart: q.retDepart,
-              ret_arrive: q.retArrive,
-              duration: q.duration,
-              fare_per_person: q.farePerPerson,
-              bag_fee: q.bagFee,
-              estimate: false,
-              price_checked: today(),
-              source: "api",
-            }))
-          );
+          const rows = result.quotes.map((q) => ({
+            option_id: opt.id,
+            origin: q.origin,
+            airline: q.airline,
+            out_depart: q.outDepart,
+            out_arrive: q.outArrive,
+            ret_depart: q.retDepart,
+            ret_arrive: q.retArrive,
+            duration: q.duration,
+            fare_per_person: q.farePerPerson,
+            bag_fee: q.bagFee,
+            plane: q.plane || null,
+            estimate: false,
+            price_checked: today(),
+            source: "api",
+          }));
+          let ins = await supabase.from("flights").insert(rows);
+          // The api rows are already deleted at this point, so if the plane column
+          // migration hasn't run yet, retry without it rather than losing the quotes.
+          if (ins.error && /plane/i.test(ins.error.message)) {
+            ins = await supabase.from("flights").insert(rows.map(({ plane: _plane, ...r }) => r));
+          }
           if (ins.error) throw new Error(ins.error.message);
         }
         return NextResponse.json({
